@@ -1,0 +1,5 @@
+# Configurations
+
+
+
+## Add any configuration here dont forget to add it to the struct in /include/config.h and read it in /src/config.c
