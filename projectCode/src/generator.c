@@ -7,26 +7,26 @@ void createDirectory(const char *path);
 int getRandomInt(int min, int max);
 
 
-// Config config;
+Config config;
 
 
-int main (int argc , char * argv[])
+int main(int argc, char *argv[])
 {
-    // //check num of arguments
-    // if (argc != 2)
-    // {
-    //     perror("Invalid number of arguments");
-    //     return 1;
-    // }
+    //check num of arguments
+    if (argc != 2)
+    {
+        perror("Invalid number of arguments");
+        return 1;
+    }
 
 
-    // // load config file
-    // if (load_config(argv[1], &config) == -1) {
-    //     perror("Error loading configuration");
-    //     return 1;
-    // }
+    // load config file
+    if (load_config(argv[1], &config) == -1) {
+        perror("Error loading configuration");
+        return 1;
+    }
 
-    createDirectory("./data");
+    createDirectory(homeDir);
     generateCSV();
 
 
@@ -64,11 +64,12 @@ int getRandomInt(int min, int max)
 void generateCSV()
 {
     int i = 0;
-    char * HOME_DIR = "./data";
+    char * HOME_DIR = homeDir;
     char filename[100];
 
-    // int Rows = 10000, Cols = 10;
-    int Rows = 3, Cols = 2;
+    int Rows = 10000, Cols = 10;
+    int minValue = -100, maxValue = 100;
+    // int Rows = 3, Cols = 2;
 
      sprintf(filename, "%s/%d.csv", HOME_DIR, i);
 
@@ -78,13 +79,30 @@ void generateCSV()
             exit(1);
         }
 
-        // if (!(config.MIN_ROWS ==-1 || config.MAX_ROWS ==-1 || config.MIN_COLS ==-1 || config.MAX_COLS ==-1 || config.MIN_VAL ==-1 || config.MAX_VAL ==-1))
-        // {
-        //     Rows = getRandomInt(config.MIN_ROWS, config.MAX_ROWS);
-        //     Cols = getRandomInt(config.MIN_COLS, config.MAX_COLS);
-        // }
+        if (!(config.MIN_ROW ==-1 || config.MAX_ROW ==-1))
+        {
+            Rows = getRandomInt(config.MIN_ROW, config.MAX_ROW);
+           
+        }
 
-      // there is a chance of missing
+        if(!(config.MIN_COLUMN ==-1 || config.MAX_COLUMN ==-1))
+        {
+            Cols = getRandomInt(config.MIN_COLUMN, config.MAX_COLUMN);
+        }
+
+        if(!(config.MIN_VALUE ==-1 || config.MAX_VALUE ==-1))
+        {
+            minValue = config.MIN_VALUE;
+            maxValue = config.MAX_VALUE;
+        }
+
+        printf("\033[0;34mRows: %d, Cols: %d, MinValue: %d, MaxValue: %d\033[0m\n", Rows, Cols, minValue, maxValue);
+        //print missing percentage
+        printf("\033[0;34mMissing percentage: %f\033[0m\n", config.MISS_PERCENTAGE);
+
+
+
+ 
         srand(time(NULL)+getpid());
 
         for (int i = 0; i < Rows; i++)
@@ -92,18 +110,16 @@ void generateCSV()
             for (int j = 0; j < Cols; j++)
             {
 
-                // if (getRandomFloat(0, 1) < config.MISSING_PROB)// missing value
-                if (getRandomFloat(0, 1) < 0.1)// missing value
+                if (getRandomFloat(0, 1) < config.MISS_PERCENTAGE)// missing value
                 {
                     if (j < Cols - 1)
-                    {
-                        fprintf(file, ",");
-                    }
+                     fprintf(file, " ,");
+ 
                 }
                 else
                 {
-                    // fprintf(file, "%f,", getRandomFloat(config.MIN_VAL, config.MAX_VAL)); // random value
-                    fprintf(file, "%f", getRandomFloat(3, 15)); // random value
+                    fprintf(file, "%f", getRandomFloat(minValue, maxValue)); // random value
+                    // fprintf(file, "%f", getRandomFloat(3, 15)); // random value
                     if (j < Cols - 1)
                     {
                         fprintf(file, ",");
@@ -116,6 +132,8 @@ void generateCSV()
         }
 
         fclose(file);
+
+        printf("\033[0;32mCSV file: %s generated successfully\033[0m\n", filename);
 
 
 
