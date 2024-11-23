@@ -26,6 +26,8 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    srand(time(NULL)+getpid());
+
     createDirectory(homeDir);
     generateCSV();
 
@@ -103,7 +105,7 @@ void generateCSV()
 
 
  
-        srand(time(NULL)+getpid());
+        
 
         for (int i = 0; i < Rows; i++)
         {
