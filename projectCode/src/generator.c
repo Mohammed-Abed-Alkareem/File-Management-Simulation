@@ -73,7 +73,7 @@ void generateCSV()
     char filename[100];
 
     // int Rows = 10000, Cols = 10;
-    int Rows = 10, Cols = 3;
+    int Rows = 3, Cols = 2;
 
      sprintf(filename, "%s/%d.csv", HOME_DIR, i);
 
@@ -100,12 +100,19 @@ void generateCSV()
                 // if (getRandomFloat(0, 1) < config.MISSING_PROB)// missing value
                 if (getRandomFloat(0, 1) < 0.1)// missing value
                 {
-                    fprintf(file, ","); // empty cell
+                    if (j < Cols - 1)
+                    {
+                        fprintf(file, ",");
+                    }
                 }
                 else
                 {
                     // fprintf(file, "%f,", getRandomFloat(config.MIN_VAL, config.MAX_VAL)); // random value
-                    fprintf(file, "%f,", getRandomFloat(3, 15)); // random value
+                    fprintf(file, "%f", getRandomFloat(3, 15)); // random value
+                    if (j < Cols - 1)
+                    {
+                        fprintf(file, ",");
+                    }
                 }
 
 
