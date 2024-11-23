@@ -1,10 +1,5 @@
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <time.h>
+#include "generator.h"
 
 float getRandomFloat(int min, int max);
 void generateCSV();
@@ -15,7 +10,7 @@ int getRandomInt(int min, int max);
 // Config config;
 
 
-int main(argc, argv)
+int main (int argc , char * argv[])
 {
     // //check num of arguments
     // if (argc != 2)

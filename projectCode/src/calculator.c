@@ -1,8 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include "calculator.h"
 
 float calculateAvgCSV(char *filename);
 int getNumRowsCSV(char *filename);

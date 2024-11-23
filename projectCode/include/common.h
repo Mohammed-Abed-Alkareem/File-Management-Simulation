@@ -12,7 +12,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <stdbool.h>
-
-
+#include <sys/stat.h>
+#include <sys/ipc.h>
 
 #endif // COMMON_H
