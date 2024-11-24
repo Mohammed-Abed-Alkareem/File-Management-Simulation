@@ -36,6 +36,12 @@ void cleanup() {
     printf("Resources cleaned up.\n");
 }
 
+void handle_usr1(int signal) {
+    printf("Received SIGUSR1 signal.\n");
+    printf("Generator process Created Home Dir.\n");
+    
+}
+
 void handle_signal(int signal) {
     cleanup();
     printf("Exiting gracefully on signal %d.\n", signal);
@@ -62,6 +68,7 @@ int main(int argc, char *argv[]) {
 
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
+    signal(SIGUSR1, handle_usr1);
 
     // Create shared memory key
     shm_gen_calc_key = ftok(".", 'M');
@@ -139,8 +146,28 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    sleep(6); // Wait for generators to start
-    //replace with a signal from generator to main
+    pause();//wait for generator to create home dir
+
+    //create A message queue for the calculators and movers
+    key_t msg_calc_mover_key = ftok(".", 'C');
+    if (msg_calc_mover_key == -1) {
+        perror("Message queue key generation failed");
+        cleanup();
+        exit(1);
+    }
+
+    int msg_calc_mover_id = msgget(msg_calc_mover_key, IPC_CREAT | 0666);
+    if (msg_calc_mover_id == -1) {
+        perror("Message queue creation failed");
+        cleanup();
+        exit(1);
+    }
+
+    char msg_calc_mover_key_str[20];
+    snprintf(msg_calc_mover_key_str, sizeof(msg_calc_mover_key_str), "%d", msg_calc_mover_key);
+    setenv("MSG_QUEUE_CM_KEY", msg_calc_mover_key_str, 1);
+
+
 
     calculators_pid = (pid_t *)malloc(config.NUM_CALCULATORS * sizeof(pid_t));
     for (int i = 0; i < config.NUM_CALCULATORS; i++) {

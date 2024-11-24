@@ -27,24 +27,60 @@ int main(int argc, char *argv[]) {
     }
     
     int key = atoi(key_str);
-    int msgid = msgget(key, 0666);
-    if (msgid == -1) {
+    int msgid_generator = msgget(key, 0666);
+    if (msgid_generator == -1) {
         perror("Message queue retrieval failed");
         return 1;
     }
+
+    ////////////////////////////
+    // Access the message queue
+
+
+    key_str = getenv("MSG_QUEUE_CM_KEY");
+    if (key_str == NULL) {
+        fprintf(stderr, "Error: MSG_QUEUE_KEY not set.\n");
+        return 1;
+    }
+
+    key = atoi(key_str);
+    int msgid_mover = msgget(key, 0666);
+
+    if (msgid_mover == -1) {
+        perror("Message queue retrieval failed");
+        return 1;
+    }
+
+
+
 
     // Message structure
     struct msgbuf message;
 
       while (1) {
         // Receive a message from the queue
-        if (msgrcv(msgid, &message, sizeof(message.file_number), 1, 0) == -1) {
+        if (msgrcv(msgid_generator, &message, sizeof(message.file_number), 1, 0) == -1) {
             perror("Error receiving message from queue");
             return 1;
         }
 
         int file_number = message.file_number;
         printf("Calculator %d received file number: %d\n",getpid(), file_number);
+        //calculate the average
+
+        sleep(3); //dummy 
+
+
+        // Send the file number to the mover
+        message.mtype = 1;
+        message.file_number = file_number;
+        if (msgsnd(msgid_mover, &message, sizeof(message.file_number), 0) == -1) {
+            perror("Message send failed");
+            return 1;
+        } else {
+            printf("Calculator %d sent file number to queue: %d\n", getpid(), file_number);
+        }
+
       }
 
 

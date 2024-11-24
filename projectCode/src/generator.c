@@ -40,6 +40,9 @@ int main(int argc, char *argv[]) {
 
     if (!dirExists(homeDir)) {
         createDirectory(homeDir);
+        //send signal to main process ppidf
+        kill(getppid(), SIGUSR1);
+
     }
 
     char *key_str = getenv("MSG_QUEUE_GC_KEY");
