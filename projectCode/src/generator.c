@@ -199,6 +199,10 @@ void generateCSV(int fileNum)
                 {
                     if (j < Cols - 1)
                      fprintf(file, " ,");
+                    else
+                    {
+                        fprintf(file, " ");
+                    }
  
                 }
                 else

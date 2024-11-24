@@ -101,7 +101,13 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    sem_id = semget(sem_gen_calc_key, 1, IPC_CREAT | 0666);
+        struct sembuf {
+        unsigned short sem_num;  // Semaphore number in the set
+        short sem_op;            // Semaphore operation
+        short sem_flg;           // Operation flags
+        };
+        
+        sem_id = semget(sem_gen_calc_key, 1, IPC_CREAT | 0666);
     if (sem_id == -1) {
         perror("Semaphore creation failed");
         cleanup();
