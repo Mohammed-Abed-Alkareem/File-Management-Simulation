@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
 }
 
 float calculateAvgCSV(char *filename) {
-    int rows = getNumRowsCSV(filename); // Get the number of rows
+    //int rows = getNumRowsCSV(filename); // Get the number of rows -- not used
     int cols = getNumColsCSV(filename); // Get the number of columns
 
     FILE *file = fopen(filename, "r");
@@ -172,7 +172,7 @@ int getNumColsCSV(char *filename) {
     char line[256];
     if (fgets(line, sizeof(line), file)) {
         // Count the commas in the first row to determine the number of columns
-        for (int i = 0; i < strlen(line); i++) {
+        for (int i = 0; i < (int)strlen(line); i++) {
             if (line[i] == ',') {
                 count++;
             }

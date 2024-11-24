@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
 
     if (!dirExists(homeDir)) {
         createDirectory(homeDir);
-        //send signal to main process ppidf
+        //send signal to main process ppid
         kill(getppid(), SIGUSR1);
 
     }
@@ -97,7 +97,7 @@ if (sem_value == -1) {
 }
 // printf("Initial semaphore value: %d\n", sem_value);
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 2; i++) {
         sleep(1);
         sem_wait(sem_id);
         // printf("\033[0;34mProcess:%d => Semaphore value: %d\033[0m\n", getpid(), semctl(sem_id, 0, GETVAL));

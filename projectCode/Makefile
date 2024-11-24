@@ -12,7 +12,8 @@ SUB_PROGRAMS = $(BIN_DIR)/calculator $(BIN_DIR)/generator \
                $(BIN_DIR)/inspector3 $(BIN_DIR)/mover
 
 # Libraries
-LIBS = -lGL -lGLU -lglut -lpthread -lm
+LIBS = -lm
+MAIN_LIBS = -lGL -lGLU -lglut -lm
 
 # Dependencies
 
@@ -25,7 +26,7 @@ all: $(MAIN_EXE) $(SUB_PROGRAMS)
 # Main program
 $(MAIN_EXE): $(OBJ_DIR)/main.o $(CONFIG_OBJ) $(UTILS_OBJ)
 	@mkdir -p $(BIN_DIR)
-	$(CC) $^ -o $@ $(LIBS)
+	$(CC) $^ -o $@ $(MAIN_LIBS)
 
 # Subprograms
 $(BIN_DIR)/calculator: $(OBJ_DIR)/calculator.o $(CONFIG_OBJ) $(UTILS_OBJ)
@@ -71,5 +72,6 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 # Clean up
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR)
+	rm -rf ./files
 
 .PHONY: all clean

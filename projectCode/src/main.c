@@ -37,7 +37,7 @@ void cleanup() {
 }
 
 void handle_usr1(int signal) {
-    printf("Received SIGUSR1 signal.\n");
+    printf("Received SIGUSR1 signal.%d\n", signal);
     printf("Generator process Created Home Dir.\n");
     
 }
