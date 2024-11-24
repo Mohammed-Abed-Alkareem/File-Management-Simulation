@@ -1,9 +1,53 @@
 #include "calculator.h"
 
-
+   Config config;
 int main(int argc, char *argv[]) {
-    // Example CSV file path
-    calculateAvgCSV("./data/0.csv");
+    // Check the number of arguments
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <config file>\n", argv[0]);
+        exit(EXIT_FAILURE);
+
+    }
+
+    // Load the configuration file
+ 
+    if (load_config(argv[1], &config) == -1) {
+        fprintf(stderr, "Error loading config file\n");
+        exit(EXIT_FAILURE);
+    }
+    
+
+
+
+     // Access the message queue
+    char *key_str = getenv("MSG_QUEUE_GC_KEY");
+    if (key_str == NULL) {
+        fprintf(stderr, "Error: MSG_QUEUE_KEY not set.\n");
+        return 1;
+    }
+    
+    int key = atoi(key_str);
+    int msgid = msgget(key, 0666);
+    if (msgid == -1) {
+        perror("Message queue retrieval failed");
+        return 1;
+    }
+
+    // Message structure
+    struct msgbuf message;
+
+      while (1) {
+        // Receive a message from the queue
+        if (msgrcv(msgid, &message, sizeof(message.file_number), 1, 0) == -1) {
+            perror("Error receiving message from queue");
+            return 1;
+        }
+
+        int file_number = message.file_number;
+        printf("Calculator %d received file number: %d\n",getpid(), file_number);
+      }
+
+
     return 0;
 }
 

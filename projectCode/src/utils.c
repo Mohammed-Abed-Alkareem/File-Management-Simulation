@@ -30,7 +30,7 @@ int fileExists(const char *path) {
 int createDirectory(const char *path) {
 
     if (mkdir(path, 0777) == -1) {
-        perror("Error creating directory");
+        printf("Error creating directory%s ", path);
         return -1;
     }
     printf("Directory %s created\n", path);

@@ -16,11 +16,11 @@ int main (int argc , char * argv[]){
 
     if(!dirExists(unprocessedDir)){
         
-            // Create directories for the files
-            if (createDirectory(unprocessedDir) == -1) {
-                perror("Error creating files directory");
-                return 1;
-            }
+        // Create directories for the files
+        if (createDirectory(unprocessedDir) == -1) {
+            perror("Error creating files directory");
+            return 1;
+        }
         
     }
 
