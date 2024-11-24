@@ -56,7 +56,8 @@ int main(int argc, char *argv[]) {
 
     // Message structure
     struct msgbuf message;
-
+    char  fileName [200];
+    int file_number;
       while (1) {
         // Receive a message from the queue
         if (msgrcv(msgid_generator, &message, sizeof(message.file_number), 1, 0) == -1) {
@@ -64,11 +65,13 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-        int file_number = message.file_number;
+        file_number = message.file_number;
+        sprintf(fileName, "%s/%d.csv", homeDir, file_number); // change the path if needed 
         printf("Calculator %d received file number: %d\n",getpid(), file_number);
         //calculate the average
 
-        sleep(3); //dummy 
+        calculateAvgCSV(fileName); 
+        //sleep(2);//dummy 
 
 
         // Send the file number to the mover
@@ -104,14 +107,19 @@ float calculateAvgCSV(char *filename) {
     memset(count, 0, cols * sizeof(int)); // Initialize counts to 0
 
     char line[256];
+    char *token;
+    int col_index ; 
     while (fgets(line, sizeof(line), file)) {
         // Tokenize the line using ',' as the delimiter
-        char *token = strtok(line, ",");
-        int col_index = 0;
+        // replace the new line with end of string 
+        line[strcspn(line, "\n")] = '\0';
 
+        token = strtok(line, ",");
+        col_index = 0;
+        //printf("line: %s file : %s \n ", line , filename);
         while (token != NULL) {
             // If the token is not empty, process it
-            if (strlen(token) > 0) {
+            if (strcmp(token," ") != 0) {
                 sum[col_index] += atof(token); // Add the value to the column sum
                 count[col_index]++; // Increment the count for the column
             }
@@ -119,20 +127,20 @@ float calculateAvgCSV(char *filename) {
             col_index++;
         }
     }
-
+    printf("exit file : %s \n ", filename);
     fclose(file);
 
     // Calculate and print the average for each column
     for (int i = 0; i < cols; i++) {
       
-            printf("Column %d average: %.6f\n", i + 1, sum[i] / count[i]);
-            printf("Column %d has %d values\n", i + 1, count[i]);
+            printf("file: %s Column %d average: %.6f\n",filename , i + 1, sum[i] / count[i]);
+            printf("file : %s Column %d has %d values\n", filename , i + 1, count[i]);
          
     }
 
     free(sum); // Free the allocated memory for sums
     free(count); // Free the allocated memory for counts
-
+    printf("finishding file  : %s \n ", filename);
     return 0;
 }
 
