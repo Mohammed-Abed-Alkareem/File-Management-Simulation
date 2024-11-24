@@ -51,5 +51,8 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-*/home/
+*/*/home/
+*/home
+*/files
+*/usr/
 */bin/

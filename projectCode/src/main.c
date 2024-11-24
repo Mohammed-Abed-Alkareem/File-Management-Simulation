@@ -18,6 +18,15 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Error loading config file\n");
         exit(EXIT_FAILURE);
     }
+
+    // Create directories for the files
+    if(!dirExists(filesDir)){
+        if (createDirectory(filesDir) == -1) {
+            perror("Error creating files directory");
+            return 1;
+        }
+    }
+
     generators_pid = (pid_t *)malloc(config.NUM_GENERATORS * sizeof(pid_t));
     if (generators_pid == NULL) {
         perror("Error allocating memory for generators_pid");
@@ -37,6 +46,8 @@ int main(int argc, char *argv[]) {
         }
         generators_pid[i] = generator_pid;
     }
+
+
     calculators_pid = (pid_t *)malloc(config.NUM_CALCULATORS * sizeof(pid_t));
     if (calculators_pid == NULL) {
         perror("Error allocating memory for calculators_pid");
@@ -56,6 +67,8 @@ int main(int argc, char *argv[]) {
         }
         calculators_pid[i] = calculator_pid;
     }
+
+
     movers_pid = (pid_t *)malloc(config.NUM_MOVERS * sizeof(pid_t));
     if (movers_pid == NULL) {
         perror("Error allocating memory for movers_pid");
@@ -76,6 +89,8 @@ int main(int argc, char *argv[]) {
         }
         movers_pid[i] = mover_pid;
     }
+
+
     inspectors1_pid = (pid_t *)malloc(config.NUM_INSPECTOR1 * sizeof(pid_t));
     if (inspectors1_pid == NULL) {
         perror("Error allocating memory for inspectors1_pid");
@@ -96,6 +111,8 @@ int main(int argc, char *argv[]) {
         inspectors1_pid[i] = inspector1_pid;
         
     }
+
+
     inspectors2_pid = (pid_t *)malloc(config.NUM_INSPECTOR2 * sizeof(pid_t));
     if (inspectors2_pid == NULL) {
         perror("Error allocating memory for inspectors2_pid");
@@ -117,6 +134,8 @@ int main(int argc, char *argv[]) {
         }
         inspectors2_pid[i] = inspector2_pid;
     }
+
+
     inspectors3_pid = (pid_t *)malloc(config.NUM_INSPECTOR3 * sizeof(pid_t));
     if (inspectors3_pid == NULL) {
         perror("Error allocating memory for inspectors3_pid");

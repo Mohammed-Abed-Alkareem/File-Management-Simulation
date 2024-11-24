@@ -16,6 +16,10 @@
 #include <sys/ipc.h>
 #include <math.h>
 
-#define homeDir "./home" // home directory can be added in another directory if needed
+#define filesDir "./files"
+#define homeDir "./files/home" // home directory can be added in another directory if needed
+#define processesdDir "./files/home/Processed"
+#define unprocessedDir "./files/home/unprocessed"
+#define backupDir "./files/home/backup"
 
 #endif // COMMON_H
