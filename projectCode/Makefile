@@ -15,45 +15,53 @@ SUB_PROGRAMS = $(BIN_DIR)/calculator $(BIN_DIR)/generator \
 LIBS = -lGL -lGLU -lglut -lpthread -lm
 
 # Dependencies
-COMMON_OBJ = $(OBJ_DIR)/config.o
+
+CONFIG_OBJ = $(OBJ_DIR)/config.o
+UTILS_OBJ = $(OBJ_DIR)/utils.o
 
 # All executables
 all: $(MAIN_EXE) $(SUB_PROGRAMS)
 
 # Main program
-$(MAIN_EXE): $(OBJ_DIR)/main.o $(COMMON_OBJ)
+$(MAIN_EXE): $(OBJ_DIR)/main.o $(CONFIG_OBJ) $(UTILS_OBJ)
 	@mkdir -p $(BIN_DIR)
 	$(CC) $^ -o $@ $(LIBS)
 
 # Subprograms
-$(BIN_DIR)/calculator: $(OBJ_DIR)/calculator.o $(COMMON_OBJ)
+$(BIN_DIR)/calculator: $(OBJ_DIR)/calculator.o $(CONFIG_OBJ) $(UTILS_OBJ)
 	@mkdir -p $(BIN_DIR)
 	$(CC) $^ -o $@ $(LIBS)
 
-$(BIN_DIR)/generator: $(OBJ_DIR)/generator.o $(COMMON_OBJ)
+$(BIN_DIR)/generator: $(OBJ_DIR)/generator.o $(CONFIG_OBJ) $(UTILS_OBJ)
 	@mkdir -p $(BIN_DIR)
 	$(CC) $^ -o $@ $(LIBS)
 
-$(BIN_DIR)/inspector1: $(OBJ_DIR)/inspector1.o $(COMMON_OBJ)
+$(BIN_DIR)/inspector1: $(OBJ_DIR)/inspector1.o $(CONFIG_OBJ) $(UTILS_OBJ)
 	@mkdir -p $(BIN_DIR)
 	$(CC) $^ -o $@ $(LIBS)
 
-$(BIN_DIR)/inspector2: $(OBJ_DIR)/inspector2.o $(COMMON_OBJ)
+$(BIN_DIR)/inspector2: $(OBJ_DIR)/inspector2.o $(CONFIG_OBJ) $(UTILS_OBJ)
 	@mkdir -p $(BIN_DIR)
 	$(CC) $^ -o $@ $(LIBS)
 
-$(BIN_DIR)/inspector3: $(OBJ_DIR)/inspector3.o $(COMMON_OBJ)
+$(BIN_DIR)/inspector3: $(OBJ_DIR)/inspector3.o $(CONFIG_OBJ) $(UTILS_OBJ)
 	@mkdir -p $(BIN_DIR)
 	$(CC) $^ -o $@ $(LIBS)
 
-$(BIN_DIR)/mover: $(OBJ_DIR)/mover.o $(COMMON_OBJ)
+$(BIN_DIR)/mover: $(OBJ_DIR)/mover.o $(CONFIG_OBJ) $(UTILS_OBJ)
 	@mkdir -p $(BIN_DIR)
 	$(CC) $^ -o $@ $(LIBS)
 
 # Compile common object file
-$(COMMON_OBJ): $(SRC_DIR)/config.c
+$(CONFIG_OBJ): $(SRC_DIR)/config.c
 	@mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
+
+$(UTILS_OBJ): $(SRC_DIR)/utils.c
+	@mkdir -p $(OBJ_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+
 
 # Compile other object files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c

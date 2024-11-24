@@ -1,8 +1,5 @@
 #include "calculator.h"
 
-float calculateAvgCSV(char *filename);
-int getNumRowsCSV(char *filename);
-int getNumColsCSV(char *filename);
 
 int main(int argc, char *argv[]) {
     // Example CSV file path

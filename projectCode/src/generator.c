@@ -1,11 +1,6 @@
 
 #include "generator.h"
 
-float getRandomFloat(int min, int max);
-void generateCSV();
-void createDirectory(const char *path);
-int getRandomInt(int min, int max);
-
 
 Config config;
 
@@ -28,7 +23,8 @@ int main(int argc, char *argv[])
 
     srand(time(NULL)+getpid());
 
-    createDirectory(homeDir);
+    if (!dirExists(homeDir))
+        createDirectory(homeDir);
     generateCSV();
 
 
@@ -39,19 +35,10 @@ return 0;
 
 }
 
-void createDirectory(const char *path)
+
+
+float getRandomFloat(int min, int max) //if any other file requiers this it can be moved to utils.c
 {
-    struct stat st = {0};
-    if (stat(path, &st) == -1) {
-        mkdir(path, 0777);
-    }
-}
-
-
-float getRandomFloat(int min, int max)
-{
-
-
     float scale = rand() / (float) RAND_MAX; /* [0, 1.0] */
     return min + scale * ( max - min );      /* [min, max] */
     // code here

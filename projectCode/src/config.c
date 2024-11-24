@@ -4,19 +4,6 @@
 #include <string.h>
 #include <stdio.h>
 
-// Function to check if a string contains a floating-point value
-int is_float(const char *str) {
-    int has_dot = 0;
-    while (*str) {
-        if (!isdigit(*str) && *str != '.' && *str != '-') return 0;
-        if (*str == '.') {
-            if (has_dot) return 0; // Only one dot is allowed
-            has_dot = 1;
-        }
-        str++;
-    }
-    return 1;
-}
 
 // Function to load configuration settings from a specified file
 int load_config(const char *filename, Config *config) {

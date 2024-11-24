@@ -4,5 +4,8 @@
 #include "common.h"
 
 int main(int argc, char *argv[]);
+float calculateAvgCSV(char *filename);
+int getNumRowsCSV(char *filename);
+int getNumColsCSV(char *filename);
 
 #endif // CALCULATOR_H

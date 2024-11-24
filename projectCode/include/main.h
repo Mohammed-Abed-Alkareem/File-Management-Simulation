@@ -7,7 +7,7 @@
 #include <signal.h>
 #include <sys/wait.h>   
 #include <string.h>
-#include <config.h>
+#include "config.h"
 #include <time.h>
 #include <string.h>
 #include <sys/types.h>
