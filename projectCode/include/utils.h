@@ -7,11 +7,24 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <sys/sem.h>
+#include <sys/msg.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/wait.h>
 
 int dirExists(const char *path);
 int fileExists(const char *path);
 int createDirectory(const char *path);
 int movefile(const char *filename, const char* srcDir, const char* destDir);
+void sem_wait(int sem_id);
+void sem_signal(int sem_id);
 
 #endif // UTILS_H
 

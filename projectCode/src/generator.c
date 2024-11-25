@@ -4,26 +4,6 @@
 
 Config config;
 
-// Semaphore operations
-void sem_wait(int sem_id) {
-    struct sembuf sb = {0, -1, 0}; // Decrement semaphore
-    if (semop(sem_id, &sb, 1) == -1) {
-        perror("Semaphore wait operation failed");
-        exit(1); // Exit the program if semaphore operation fails
-    }
-    // printf("\033[0;31mProcess:%d => Semaphore wait operation\033[0m\n", getpid());
-}
-
-void sem_signal(int sem_id) {
-    struct sembuf sb = {0, 1, 0}; // Increment semaphore
-    if (semop(sem_id, &sb, 1) == -1) {
-        perror("Semaphore signal operation failed");
-        exit(1); // Exit the program if semaphore operation fails
-    }
-    // printf("\033[0;31mProcess:%d => Semaphore signal operation\033[0m\n", getpid());
-}
-
-
 
 int main(int argc, char *argv[]) {
     if (argc != 4) {
@@ -35,8 +15,28 @@ int main(int argc, char *argv[]) {
         perror("Error loading configuration");
         return 1;
     }
+    
+    key_t shm_key = atoi(argv[2]);
+    key_t sem_key = atoi(argv[3]);
 
     srand(time(NULL) + getpid());
+    int sem_id = semget(sem_key, 1, 0666);
+    if (sem_id == -1) {
+        perror("Semaphore retrieval failed");
+        return 1;
+    }
+
+    printf("\033[0;31mProcess:%d => Generator process started\033[0m\n", getpid());
+
+
+    int sem_value = semctl(sem_id, 0, GETVAL);
+    if (sem_value == -1) {
+        perror("Failed to get semaphore value");
+        exit(1);
+    }
+    // printf("Initial semaphore value: %d\n", sem_value);
+
+    sem_wait(sem_id);
 
     if (!dirExists(homeDir)) {
         createDirectory(homeDir);
@@ -44,6 +44,7 @@ int main(int argc, char *argv[]) {
         kill(getppid(), SIGUSR1);
 
     }
+    sem_signal(sem_id);
 
     char *key_str = getenv("MSG_QUEUE_GC_KEY");
     if (key_str == NULL) {
@@ -58,8 +59,6 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    key_t shm_key = atoi(argv[2]);
-    key_t sem_key = atoi(argv[3]);
 
 //    printf("Process %d: Attempting to retrieve shared memory with key: %d\n", getpid(), shm_key);
 int shm_id = shmget(shm_key, sizeof(int), 0666);
@@ -81,21 +80,6 @@ if (file_counter == (void *)-1) {
 //     printf("Process %d: Current file_counter value: %d (address: %p)\n", getpid(), *file_counter, (void *)file_counter);
 // fflush(stdout);
 
-    int sem_id = semget(sem_key, 1, 0666);
-    if (sem_id == -1) {
-        perror("Semaphore retrieval failed");
-        return 1;
-    }
-
-    printf("\033[0;31mProcess:%d => Generator process started\033[0m\n", getpid());
-
-
-int sem_value = semctl(sem_id, 0, GETVAL);
-if (sem_value == -1) {
-    perror("Failed to get semaphore value");
-    exit(1);
-}
-// printf("Initial semaphore value: %d\n", sem_value);
 
     for (int i = 0; i < 2; i++) {
         sleep(1);

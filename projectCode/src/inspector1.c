@@ -4,7 +4,7 @@ Config config;
 
 int main (int argc , char * argv[]){
 
-    if (argc != 2) {
+    if (argc != 3) {
         fprintf(stderr, "Usage: %s <config file>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
@@ -14,6 +14,20 @@ int main (int argc , char * argv[]){
         exit(EXIT_FAILURE);
     }
 
+    key_t sem_key = atoi(argv[2]);
+    int sem_id = semget(sem_key, 1, 0666);
+    if (sem_id == -1) {
+        perror("Semaphore retrieval failed");
+        return 1;
+    }
+
+    int sem_value = semctl(sem_id, 0, GETVAL);
+    if (sem_value == -1) {
+        perror("Failed to get semaphore value");
+        exit(1);
+    }
+
+    sem_wait(sem_id);
     if(!dirExists(unprocessedDir)){
         
         // Create directories for the files
@@ -23,6 +37,7 @@ int main (int argc , char * argv[]){
         }
         
     }
+    sem_signal(sem_id);
 
     sleep(10);
 
