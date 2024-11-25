@@ -83,3 +83,21 @@ int movefile(const char *filename, const char* srcDir, const char* destDir) {
 
 
 }
+// Semaphore operations
+void sem_wait(int sem_id) {
+    struct sembuf sb = {0, -1, 0}; // Decrement semaphore
+    if (semop(sem_id, &sb, 1) == -1) {
+        perror("Semaphore wait operation failed");
+        exit(1); // Exit the program if semaphore operation fails
+    }
+    // printf("\033[0;31mProcess:%d => Semaphore wait operation\033[0m\n", getpid());
+}
+
+void sem_signal(int sem_id) {
+    struct sembuf sb = {0, 1, 0}; // Increment semaphore
+    if (semop(sem_id, &sb, 1) == -1) {
+        perror("Semaphore signal operation failed");
+        exit(1); // Exit the program if semaphore operation fails
+    }
+    // printf("\033[0;31mProcess:%d => Semaphore signal operation\033[0m\n", getpid());
+}
