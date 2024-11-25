@@ -1,5 +1,6 @@
 #include <GL/glut.h>
 #include <stdio.h>
+#include <string.h>
 
 // Global variables
 float maxTime = 10.0f; // Maximum time in seconds
@@ -84,7 +85,7 @@ void display() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Calculate the progress for the bars
-    float progress = elapsedTime / maxTime;
+    float timeProgress = elapsedTime / maxTime;
 
     // Create labels for current time and max time
     char currentTimeText[50];
@@ -94,7 +95,7 @@ void display() {
     sprintf(maxTimeText, "Max: %.1f s", maxTime);
 
     // Draw horizontal loading bars
-    drawLoadingBar(-0.9f, 0.9f, 1.0f, 0.1f, progress, currentTimeText, maxTimeText); //timer bar
+    drawLoadingBar(-0.9f, 0.9f, 1.0f, 0.1f, timeProgress, currentTimeText, maxTimeText); //timer bar
 
     char numberGenerated[50];
     sprintf(numberGenerated, "Number of generated files: %d", (int)elapsedTime);//change to real number from shared memory
@@ -107,8 +108,13 @@ void display() {
     float spacing = 0.1f;
     float startX = -0.9f;
     float startY = 0.5f;
+    float progress [4];
+    memset(progress, 0, sizeof(progress));
+    //get progress from pipe from the main process
+
     for (int i = 0; i < 4; i++) {
-        drawVerticalBar(startX + i * (barWidth + spacing), startY, barWidth, 0.8f, progress, currentTimeText, maxTimeText);
+        progress[i] = elapsedTime / maxTime;
+        drawVerticalBar(startX + i * (barWidth + spacing), startY, barWidth, 0.8f, progress[i], currentTimeText, maxTimeText);
     }
 
     
