@@ -217,8 +217,8 @@ int main(int argc, char *argv[]) {
     generators_pid = (pid_t *)malloc(config.NUM_GENERATORS * sizeof(pid_t));
     for (int i = 0; i < config.NUM_GENERATORS; i++) {
         if ((generators_pid[i] = fork()) == 0) {
-            // execl("./bin/generator", "generator", argv[1], shm_key_str, sem_key_str, NULL);
-            execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/generator", "generator", argv[1], shm_key_str, sem_key_str, NULL);
+            execl("./bin/generator", "generator", argv[1], shm_key_str, sem_key_str, NULL);
+            // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/generator", "generator", argv[1], shm_key_str, sem_key_str, NULL);
             perror("Generator process failed");
             exit(1);
         }
@@ -250,8 +250,8 @@ int main(int argc, char *argv[]) {
     calculators_pid = (pid_t *)malloc(config.NUM_CALCULATORS * sizeof(pid_t));
     for (int i = 0; i < config.NUM_CALCULATORS; i++) {
         if ((calculators_pid[i] = fork()) == 0) {
-            // execl("./bin/calculator", "calculator", argv[1], NULL);
-            execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/calculator", "calculator", argv[1], NULL);
+            execl("./bin/calculator", "calculator", argv[1], NULL);
+            // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/calculator", "calculator", argv[1], NULL);
             perror("Calculator process failed");
             exit(1);
         }
@@ -260,8 +260,8 @@ int main(int argc, char *argv[]) {
     movers_pid = (pid_t *)malloc(config.NUM_MOVERS * sizeof(pid_t));
     for (int i = 0; i < config.NUM_MOVERS; i++) {
         if ((movers_pid[i] = fork()) == 0) {
-            // execl("./bin/mover", "mover", argv[1], sem_mover_key_str, NULL);
-            execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/mover", "mover", argv[1],sem_mover_key_str, NULL);
+            execl("./bin/mover", "mover", argv[1], sem_mover_key_str, NULL);
+            // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/mover", "mover", argv[1],sem_mover_key_str, NULL);
             perror("Mover process failed");
             exit(1);
         }
@@ -270,8 +270,8 @@ int main(int argc, char *argv[]) {
     inspectors1_pid = (pid_t *)malloc(config.NUM_INSPECTOR1 * sizeof(pid_t));
     for (int i = 0; i < config.NUM_INSPECTOR1; i++) {
         if ((inspectors1_pid[i] = fork()) == 0) {
-            // execl("./bin/inspector1", "inspector1", argv[1],sem_inspector1_key_str, NULL);
-            execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/inspector1", "inspector1", argv[1],sem_inspector1_key_str, NULL);
+            execl("./bin/inspector1", "inspector1", argv[1],sem_inspector1_key_str, NULL);
+            // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/inspector1", "inspector1", argv[1],sem_inspector1_key_str, NULL);
             perror("Inspector1 process failed");
             exit(1);
         }
@@ -280,8 +280,8 @@ int main(int argc, char *argv[]) {
     inspectors2_pid = (pid_t *)malloc(config.NUM_INSPECTOR2 * sizeof(pid_t));
     for (int i = 0; i < config.NUM_INSPECTOR2; i++) {
         if ((inspectors2_pid[i] = fork()) == 0) {
-            // execl("./bin/inspector2", "inspector2", argv[1],sem_inspector2_key_str, NULL);
-            execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/inspector2", "inspector2", argv[1],sem_inspector2_key_str, NULL);
+            execl("./bin/inspector2", "inspector2", argv[1],sem_inspector2_key_str, NULL);
+            // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/inspector2", "inspector2", argv[1],sem_inspector2_key_str, NULL);
             perror("Inspector2 process failed");
             exit(1);
         }
@@ -290,8 +290,8 @@ int main(int argc, char *argv[]) {
     inspectors3_pid = (pid_t *)malloc(config.NUM_INSPECTOR3 * sizeof(pid_t));
     for (int i = 0; i < config.NUM_INSPECTOR3; i++) {
         if ((inspectors3_pid[i] = fork()) == 0) {
-            // execl("./bin/inspector3", "inspector3", argv[1], NULL);
-            execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/inspector3", "inspector3", argv[1], NULL);
+            execl("./bin/inspector3", "inspector3", argv[1], NULL);
+            // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/inspector3", "inspector3", argv[1], NULL);
             perror("Inspector3 process failed");
             exit(1);
         }
