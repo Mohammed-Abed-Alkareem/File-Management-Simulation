@@ -20,12 +20,13 @@ pid_t *inspectors3_pid;
 
 key_t shm_gen_calc_key, sem_gen_calc_key, msg_gen_calc_key;
 key_t sem_inspector1_key , sem_inspector2_key , sem_mover_key;
-int shm_id = -1, sem_id = -1, msg_id = -1;
+int shm_id = -1, sem_id = -1, msg_gen_calc_id = -1, msg_calc_mover_id = -1;
 int sem_inspector1_id = -1 , sem_inspector2_id = -1 , sem_mover_id = -1;
 void cleanup() {
     if (shm_id != -1) shmctl(shm_id, IPC_RMID, NULL);
     if (sem_id != -1) semctl(sem_id, 0, IPC_RMID);
-    if (msg_id != -1) msgctl(msg_id, IPC_RMID, NULL);
+    if (msg_gen_calc_id != -1) msgctl(msg_gen_calc_id, IPC_RMID, NULL);
+    if (msg_calc_mover_id != -1) msgctl(msg_calc_mover_id, IPC_RMID, NULL);
     if (sem_inspector1_id != -1) semctl(sem_inspector1_id, 0, IPC_RMID);
     if (sem_inspector2_id != -1) semctl(sem_inspector2_id, 0, IPC_RMID);
     if (sem_mover_id != -1) semctl(sem_mover_id, 0, IPC_RMID);
@@ -196,8 +197,8 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    msg_id = msgget(msg_gen_calc_key, IPC_CREAT | 0666);
-    if (msg_id == -1) {
+    msg_gen_calc_id = msgget(msg_gen_calc_key, IPC_CREAT | 0666);
+    if (msg_gen_calc_id == -1) {
         perror("Message queue creation failed");
         cleanup();
         exit(1);
@@ -234,7 +235,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    int msg_calc_mover_id = msgget(msg_calc_mover_key, IPC_CREAT | 0666);
+     msg_calc_mover_id = msgget(msg_calc_mover_key, IPC_CREAT | 0666);
     if (msg_calc_mover_id == -1) {
         perror("Message queue creation failed");
         cleanup();
