@@ -26,7 +26,7 @@ int main (int argc , char * argv[]){
         exit(1);
     }
 
-    sem_wait(sem_id);
+    semaphore_wait(sem_id);
 
     if(!dirExists(backupDir)){
         
@@ -38,7 +38,7 @@ int main (int argc , char * argv[]){
         
     }
 
-    sem_signal(sem_id);
+    semaphore_signal(sem_id);
 
     sleep(15);
 

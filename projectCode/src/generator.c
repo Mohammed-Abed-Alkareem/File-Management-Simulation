@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
     }
     // printf("Initial semaphore value: %d\n", sem_value);
 
-    sem_wait(sem_id);
+    semaphore_wait(sem_id);
 
     if (!dirExists(homeDir)) {
         createDirectory(homeDir);
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
         kill(getppid(), SIGUSR1);
 
     }
-    sem_signal(sem_id);
+    semaphore_signal(sem_id);
 
     char *key_str = getenv("MSG_QUEUE_GC_KEY");
     if (key_str == NULL) {
@@ -83,11 +83,11 @@ if (file_counter == (void *)-1) {
 
     for (int i = 0; i < 2; i++) {
         sleep(1);
-        sem_wait(sem_id);
+        semaphore_wait(sem_id);
         // printf("\033[0;34mProcess:%d => Semaphore value: %d\033[0m\n", getpid(), semctl(sem_id, 0, GETVAL));
         int file_number = (*file_counter)++;
         // printf("\033[0;31mProcess:%d => File number: %d\033[0m\n", getpid(), file_number);
-        sem_signal(sem_id);
+        semaphore_signal(sem_id);
 
         // printf("\033[0;31mProcess:%d => Generating CSV file: %d\033[0m\n", getpid(), file_number);
 
@@ -139,6 +139,15 @@ void generateCSV(int fileNum)
     int Rows = 10000, Cols = 10;
     int minValue = -100, maxValue = 100;
     // int Rows = 3, Cols = 2;
+
+    //create named semaphore for each csv file
+    char sem_name[150];
+    sprintf(sem_name, "/sem_%d", i);
+    sem_t *sem = sem_open(sem_name, O_CREAT, 0666, 1);
+    if (sem == SEM_FAILED) {
+        perror("Semaphore creation failed");
+        exit(1);
+    }
 
      sprintf(filename, "%s/%d.csv", HOME_DIR, i);
 

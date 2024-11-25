@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
         printf("Calculator %d received file number: %d\n",getpid(), file_number);
         //calculate the average
 
-        calculateAvgCSV(fileName); 
+        calculateAvgCSV(fileName, file_number); 
         //sleep(2);//dummy 
 
 
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-float calculateAvgCSV(char *filename) {
+float calculateAvgCSV(char *filename , int file_number) {
     //int rows = getNumRowsCSV(filename); // Get the number of rows -- not used
     int cols = getNumColsCSV(filename); // Get the number of columns
 
@@ -99,7 +99,16 @@ float calculateAvgCSV(char *filename) {
         fprintf(stderr, "Error: Unable to open file %s\n", filename);
         return -1;
     }
+    //open the named semaphore that is created by the generator wich coresponed to the file number
+    char sem_name[150];
+    sprintf(sem_name, "/sem_%d", file_number);
+    sem_t *sem = sem_open(sem_name, O_CREAT, 0666, 0);
+    if (sem == SEM_FAILED) {
+        perror("Semaphore creation failed");
+        exit(1);
+    }
 
+    sem_wait(sem);// lock the semaphore
     float *sum = (float *)malloc(cols * sizeof(float)); // Array to hold the sums for each column
     int *count = (int *)malloc(cols * sizeof(int)); // Array to hold the count of valid numbers for each column
 
@@ -129,6 +138,8 @@ float calculateAvgCSV(char *filename) {
     }
     printf("exit file : %s \n ", filename);
     fclose(file);
+    sem_post(sem);// release the semaphore
+    sem_close(sem); // close the semaphore
 
     // Calculate and print the average for each column
     for (int i = 0; i < cols; i++) {
