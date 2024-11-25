@@ -15,7 +15,7 @@
 #include <sys/wait.h>
 
 int main(int argc, char *argv[]);
-float calculateAvgCSV(char *filename);
+float calculateAvgCSV(char *filename, int file_number);
 int getNumRowsCSV(char *filename);
 int getNumColsCSV(char *filename);
 

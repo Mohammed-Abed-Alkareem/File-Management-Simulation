@@ -23,8 +23,8 @@ int dirExists(const char *path);
 int fileExists(const char *path);
 int createDirectory(const char *path);
 int movefile(const char *filename, const char* srcDir, const char* destDir);
-void sem_wait(int sem_id);
-void sem_signal(int sem_id);
+void semaphore_wait(int sem_id);
+void semaphore_signal(int sem_id);
 
 #endif // UTILS_H
 
