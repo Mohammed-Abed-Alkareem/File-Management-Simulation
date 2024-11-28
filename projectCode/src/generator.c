@@ -46,6 +46,8 @@ int main(int argc, char *argv[]) {
     }
     semaphore_signal(sem_id);
 
+
+///message_calc queue for generator and calculator
     char *key_str = getenv("MSG_QUEUE_GC_KEY");
     if (key_str == NULL) {
         fprintf(stderr, "Error: MSG_QUEUE_KEY not set.\n");
@@ -53,8 +55,22 @@ int main(int argc, char *argv[]) {
     }
 
     int key = atoi(key_str);
-    int msgid = msgget(key, 0666);
-    if (msgid == -1) {
+    int msg_calc_id = msgget(key, 0666);
+    if (msg_calc_id == -1) {
+        perror("Message queue retrieval failed");
+        return 1;
+    }
+
+    ///////message_calc queue for generator and inspector1
+    char *key_str_insp1 = getenv("MSG_QUEUE_GI1_KEY");
+    if (key_str_insp1 == NULL) {
+        fprintf(stderr, "Error: MSG_QUEUE_KEY not set.\n");
+        return 1;
+    }
+
+    int key_insp1 = atoi(key_str_insp1);
+    int msg_insp1_id = msgget(key_insp1, 0666);
+    if (msg_insp1_id == -1) {
         perror("Message queue retrieval failed");
         return 1;
     }
@@ -93,16 +109,29 @@ if (file_counter == (void *)-1) {
 
         generateCSV(file_number);
 
-        struct msgbuf message;
-        message.mtype = 1;
-        message.file_number = file_number;
+        struct msgbuf message_calc;
+        message_calc.mtype = 1;
+        message_calc.file_number = file_number;
 
-        if (msgsnd(msgid, &message, sizeof(message.file_number), 0) == -1) {
+        if (msgsnd(msg_calc_id, &message_calc, sizeof(message_calc.file_number), 0) == -1) {
             perror("Message send failed");
             exit(1);
         } else {
-            printf("Process:%d => Sent file number to queue: %d\n", getpid(), message.file_number);
+            printf("Process:%d => Sent file number to queue: %d\n", getpid(), message_calc.file_number);
         }
+
+        struct msgbuf2 message_insp1;
+        message_insp1.mtype = 1;
+        message_insp1.file_number = file_number;
+        message_insp1.time = time(NULL);
+
+        if (msgsnd(msg_insp1_id, &message_insp1, sizeof(message_insp1.file_number) + sizeof(message_insp1.time), 0) == -1) {
+            perror("Message send failed");
+            exit(1);
+        } else {
+            printf("Process:%d => Sent file number and time to queue: %d\n", getpid(), message_insp1.file_number);
+        }
+        
 
         sleep(5);
     }

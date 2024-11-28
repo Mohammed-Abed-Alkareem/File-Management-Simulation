@@ -18,10 +18,27 @@ pid_t *inspectors1_pid;
 pid_t *inspectors2_pid;
 pid_t *inspectors3_pid;
 
-key_t shm_gen_calc_key, sem_gen_calc_key, msg_gen_calc_key;
-key_t sem_inspector1_key , sem_inspector2_key , sem_mover_key;
-int shm_id = -1, sem_id = -1, msg_gen_calc_id = -1, msg_calc_mover_id = -1;
+key_t shm_gen_key; // Shared memory key between generators to obtain file counter
+key_t sem_gen_calc_key; // Semaphore key between generators and calculators
+key_t msg_gen_calc_key; // Message queue key between generators and calculators
+key_t msg_calc_mover_key; // Message queue key between calculators and movers
+
+//message queue key between generator and inspector1
+key_t msg_gen_insp1_key;
+//message queue key between mover and inspector2
+key_t msg_mover_insp2_key;
+
+//meesaage queue key between inspector2 and inspector3
+key_t msg_insp2_insp3_key;
+
+key_t sem_inspector1_key ; // Semaphore key between generators and inspector1
+key_t sem_inspector2_key; // Semaphore key between generators and inspector2 
+key_t sem_mover_key; // Semaphore key between generators and mover
+
+int shm_id = -1, sem_id = -1, msg_gen_calc_id = -1, msg_calc_mover_id = -1, msg_gen_insp1_id = -1, msg_mover_insp2_id = -1, msg_insp2_insp3_id = -1; 
+
 int sem_inspector1_id = -1 , sem_inspector2_id = -1 , sem_mover_id = -1;
+
 void cleanup() {
     if (shm_id != -1) shmctl(shm_id, IPC_RMID, NULL);
     if (sem_id != -1) semctl(sem_id, 0, IPC_RMID);
@@ -76,13 +93,9 @@ int main(int argc, char *argv[]) {
     signal(SIGUSR1, handle_usr1);
 
     // Create shared memory key
-    shm_gen_calc_key = ftok(".", 'M');
-    if (shm_gen_calc_key == -1) {
-        perror("Shared memory key generation failed");
-        exit(1);
-    }
+    shm_gen_key = key_generator();
 
-    shm_id = shmget(shm_gen_calc_key, sizeof(int), IPC_CREAT | 0666);
+    shm_id = shmget(shm_gen_key, sizeof(int), IPC_CREAT | 0666);
     if (shm_id == -1) {
         perror("Shared memory creation failed");
         cleanup();
@@ -99,33 +112,17 @@ int main(int argc, char *argv[]) {
     shmdt(file_counter);
 
     // Create semaphore key
-    sem_gen_calc_key = ftok(".", 'S');
-    if (sem_gen_calc_key == -1) {
-        perror("Semaphore key generation failed");
-        cleanup();
-        exit(1);
-    }
+    sem_gen_calc_key = key_generator();
+
     // Create semaphore key for inspector1
-    key_t sem_gen_insp1_key = ftok(".", 'I');
-    if (sem_inspector1_key == -1) {
-        perror("Semaphore key generation failed");
-        cleanup();
-        exit(1);
-    }
+    key_t sem_gen_insp1_key = key_generator();
+
     // Create semaphore key for inspector2
-    key_t sem_gen_insp2_key = ftok(".", 'J');
-    if (sem_inspector2_key == -1) {
-        perror("Semaphore key generation failed");
-        cleanup();
-        exit(1);
-    }
+    key_t sem_gen_insp2_key = key_generator();
+
     // Create semaphore key for mover
-    key_t sem_gen_mover_key = ftok(".",'K');
-    if (sem_mover_key == -1) {
-        perror("Semaphore key generation failed");
-        cleanup();
-        exit(1);
-    }
+    key_t sem_gen_mover_key = key_generator();
+
 
 
         struct sembuf {
@@ -190,12 +187,7 @@ int main(int argc, char *argv[]) {
     
 
     // Create message queue key
-    msg_gen_calc_key = ftok(".", 'Q');
-    if (msg_gen_calc_key == -1) {
-        perror("Message queue key generation failed");
-        cleanup();
-        exit(1);
-    }
+    msg_gen_calc_key = key_generator();
 
     msg_gen_calc_id = msgget(msg_gen_calc_key, IPC_CREAT | 0666);
     if (msg_gen_calc_id == -1) {
@@ -204,11 +196,29 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    char shm_key_str[20], sem_key_str[20], msg_key_str[20];
-    snprintf(shm_key_str, sizeof(shm_key_str), "%d", shm_gen_calc_key);
+    // Create message queue key between generator and inspector1
+    msg_gen_insp1_key = key_generator();
+    
+    msg_gen_insp1_id = msgget(msg_gen_insp1_key, IPC_CREAT | 0666);
+    if (msg_gen_insp1_id == -1) {
+        perror("Message queue creation failed");
+        cleanup();
+        exit(1);
+    }
+
+    char shm_key_str[20], sem_key_str[20], msg_gen_calc_key_str[20], msg_gen_insp1_key_str[20]; ;
+
+    snprintf(shm_key_str, sizeof(shm_key_str), "%d", shm_gen_key);
+     setenv("MSG_QUEUE_GC_KEY", msg_gen_calc_key_str, 1);
+
+    snprintf(msg_gen_insp1_key_str, sizeof(msg_gen_insp1_key_str), "%d", msg_gen_insp1_key);
+    setenv("MSG_QUEUE_GI1_KEY", msg_gen_insp1_key_str, 1);
+
+
     snprintf(sem_key_str, sizeof(sem_key_str), "%d", sem_gen_calc_key);
-    snprintf(msg_key_str, sizeof(msg_key_str), "%d", msg_gen_calc_key);
-    setenv("MSG_QUEUE_GC_KEY", msg_key_str, 1);
+    snprintf(msg_gen_calc_key_str, sizeof(msg_gen_calc_key_str), "%d", msg_gen_calc_key);
+
+
     char sem_inspector1_key_str[20] , sem_inspector2_key_str[20] , sem_mover_key_str[20];
     snprintf(sem_inspector1_key_str, sizeof(sem_inspector1_key_str), "%d", sem_gen_insp1_key);
     snprintf(sem_inspector2_key_str, sizeof(sem_inspector2_key_str), "%d", sem_gen_insp2_key);
@@ -257,6 +267,23 @@ int main(int argc, char *argv[]) {
             exit(1);
         }
     }
+
+    //create message queue key between mover and inspector2
+    msg_mover_insp2_key = key_generator();
+
+    msg_mover_insp2_id = msgget(msg_mover_insp2_key, IPC_CREAT | 0666);
+    if (msg_mover_insp2_id == -1) {
+        perror("Message queue creation failed");
+        cleanup();
+        exit(1);
+    }
+
+    char msg_mover_insp2_key_str[20];
+    snprintf(msg_mover_insp2_key_str, sizeof(msg_mover_insp2_key_str), "%d", msg_mover_insp2_key);
+
+    setenv("MSG_QUEUE_MI2_KEY", msg_mover_insp2_key_str, 1);
+
+    
 
     movers_pid = (pid_t *)malloc(config.NUM_MOVERS * sizeof(pid_t));
     for (int i = 0; i < config.NUM_MOVERS; i++) {
@@ -307,4 +334,13 @@ int main(int argc, char *argv[]) {
 
     cleanup();
     return 0;
+}
+
+key_t key_generator(){
+
+    char letter = rand() % 26 + 'A';
+
+    key_t msg_gen_calc_key = ftok(".", letter);
+
+    return msg_gen_calc_key;
 }

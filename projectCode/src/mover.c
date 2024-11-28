@@ -57,8 +57,27 @@ int main (int argc , char * argv[]){
         return 1;
     }
 
+
+    //message queue for the movers and inspector2
+    key_str = getenv("MSG_QUEUE_MI2_KEY");
+    if (key_str == NULL) {
+        fprintf(stderr, "Error: MSG_QUEUE_KEY not set.\n");
+        return 1;
+    }
+
+    key = atoi(key_str);
+    int msgid_mover_insp2 = msgget(key, 0666);
+
+    if (msgid_mover_insp2 == -1) {
+        perror("Message queue retrieval failed");
+        return 1;
+    }
+
+
+
     // Message structure
     struct msgbuf message;
+    struct msgbuf2 message2;
 
     while (1) {
         if (msgrcv(msgid_mover, &message, sizeof(message.file_number), 1, 0) == -1) {
@@ -74,7 +93,17 @@ int main (int argc , char * argv[]){
 
         movefile(filename, homeDir, processesdDir);
 
+        message2.mtype = 1;
+        message2.file_number = file_number;
+        message2.time = time(NULL);
+
+        if (msgsnd(msgid_mover_insp2, &message2, sizeof(message2.file_number) + sizeof(message2.time), 0) == -1) {
+            perror("Message send failed");
+            return 1;
+        }
+
         printf("Mover %d moved file number: %d\n", getpid(), file_number);
+
     }
 
     

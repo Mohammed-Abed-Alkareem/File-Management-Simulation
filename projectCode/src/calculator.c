@@ -71,6 +71,7 @@ int main(int argc, char *argv[]) {
         //calculate the average
 
         calculateAvgCSV(fileName, file_number); 
+        //when cannot open file skip
         //sleep(2);//dummy 
 
 

@@ -112,10 +112,13 @@ void display() {
     memset(progress, 0, sizeof(progress));
     //get progress from pipe from the main process
 
-    for (int i = 0; i < 4; i++) {
+   
         progress[i] = elapsedTime / maxTime;
-        drawVerticalBar(startX + i * (barWidth + spacing), startY, barWidth, 0.8f, progress[i], currentTimeText, maxTimeText);
-    }
+        drawVerticalBar(startX + 0 * (barWidth + spacing), startY, barWidth, 0.8f, progress[0], currentTimeText, maxTimeText);
+        drawVerticalBar(startX + 1 * (barWidth + spacing), startY, barWidth, 0.8f, progress[1], currentTimeText, maxTimeText);
+        drawVerticalBar(startX + 2 * (barWidth + spacing), startY, barWidth, 0.8f, progress[2], currentTimeText, maxTimeText);
+        drawVerticalBar(startX + 3 * (barWidth + spacing), startY, barWidth, 0.8f, progress[3], currentTimeText, maxTimeText);
+
 
     
     

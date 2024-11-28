@@ -101,3 +101,15 @@ void semaphore_signal(int sem_id) {
     }
     // printf("\033[0;31mProcess:%d => Semaphore signal operation\033[0m\n", getpid());
 }
+
+int deleteFile(const char *filename, const char* dir) {
+    char path[100];
+    sprintf(path, "%s/%s", dir, filename);
+    if (remove(path) == 0) {
+        printf("File deleted: %s\n", path);
+        return 0;
+    } else {
+        perror("Error deleting file");
+        return -1;
+    }
+}

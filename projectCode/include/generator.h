@@ -24,4 +24,11 @@ struct msgbuf {
     int file_number;   // The file number
 };
 
+struct msgbuf2 {
+    long mtype;        // Message type (must be > 0)
+    int file_number;   // The file number
+   // time of creating the file
+   time_t time;
+};
+
 #endif // GENERATOR_H

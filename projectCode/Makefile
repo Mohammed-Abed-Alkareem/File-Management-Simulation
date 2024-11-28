@@ -19,6 +19,7 @@ MAIN_LIBS = -lGL -lGLU -lglut -lm
 
 CONFIG_OBJ = $(OBJ_DIR)/config.o
 UTILS_OBJ = $(OBJ_DIR)/utils.o
+HEAP_OBJ = $(OBJ_DIR)/heap.o
 
 # All executables
 all: $(MAIN_EXE) $(SUB_PROGRAMS)
@@ -37,15 +38,15 @@ $(BIN_DIR)/generator: $(OBJ_DIR)/generator.o $(CONFIG_OBJ) $(UTILS_OBJ)
 	@mkdir -p $(BIN_DIR)
 	$(CC) $^ -o $@ $(LIBS)
 
-$(BIN_DIR)/inspector1: $(OBJ_DIR)/inspector1.o $(CONFIG_OBJ) $(UTILS_OBJ)
+$(BIN_DIR)/inspector1: $(OBJ_DIR)/inspector1.o $(CONFIG_OBJ) $(UTILS_OBJ) $(HEAP_OBJ)
 	@mkdir -p $(BIN_DIR)
 	$(CC) $^ -o $@ $(LIBS)
 
-$(BIN_DIR)/inspector2: $(OBJ_DIR)/inspector2.o $(CONFIG_OBJ) $(UTILS_OBJ)
+$(BIN_DIR)/inspector2: $(OBJ_DIR)/inspector2.o $(CONFIG_OBJ) $(UTILS_OBJ) $(HEAP_OBJ)
 	@mkdir -p $(BIN_DIR)
 	$(CC) $^ -o $@ $(LIBS)
 
-$(BIN_DIR)/inspector3: $(OBJ_DIR)/inspector3.o $(CONFIG_OBJ) $(UTILS_OBJ)
+$(BIN_DIR)/inspector3: $(OBJ_DIR)/inspector3.o $(CONFIG_OBJ) $(UTILS_OBJ) $(HEAP_OBJ)
 	@mkdir -p $(BIN_DIR)
 	$(CC) $^ -o $@ $(LIBS)
 
@@ -59,6 +60,10 @@ $(CONFIG_OBJ): $(SRC_DIR)/config.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(UTILS_OBJ): $(SRC_DIR)/utils.c
+	@mkdir -p $(OBJ_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(HEAP_OBJ): $(SRC_DIR)/heap.c
 	@mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
