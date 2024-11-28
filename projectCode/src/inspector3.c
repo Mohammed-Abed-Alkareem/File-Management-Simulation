@@ -16,7 +16,7 @@ void handle_signal(int sig) {
 void process_files_from_heap(MinHeap *heap, const Config *config) {
     if (heap->size > 0) {
         time_t min_time = get_min_time(heap);
-        if (min_time + config->INSPECTOR3_INTERVAL > time(NULL)) {
+        if (min_time + config->INSPECTOR3_THRESHOLD > time(NULL)) {
             HeapNode min_node = min_heap_extract(heap);
 
             char filename[20];
@@ -59,16 +59,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    // Initialize directories
-    semaphore_wait(sem_id);
-    if (!dirExists(config.unprocessedDir)) {
-        if (createDirectory(config.unprocessedDir) == -1) {
-            perror("Error creating unprocessed directory");
-            semaphore_signal(sem_id);
-            exit(EXIT_FAILURE);
-        }
-    }
-    semaphore_signal(sem_id);
+ 
 
     // Retrieve message queue key from environment
     char *key_str = getenv("MSG_QUEUE_MI2_KEY");

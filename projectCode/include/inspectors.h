@@ -2,8 +2,9 @@
 #define INSPECTORS_H
 
 #include "common.h"
+#include "heap.h"
 
- #include "hash_table.h"
+
 int main (int argc , char * argv[]);
 
 

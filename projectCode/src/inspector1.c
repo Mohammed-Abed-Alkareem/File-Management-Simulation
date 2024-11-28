@@ -16,13 +16,13 @@ void handle_signal(int sig) {
 void process_files_from_heap(MinHeap *heap, const Config *config) {
     if (heap->size > 0) {
         time_t min_time = get_min_time(heap);
-        if (min_time + config->INSPECTOR1_INTERVAL > time(NULL)) {
+        if (min_time + config->INSPECTOR1_THRESHOLD > time(NULL)) {
             HeapNode min_node = min_heap_extract(heap);
 
             char filename[100];
             sprintf(filename, "%d.csv", min_node.file_number);
 
-            if (movefile(filename, config->homeDir, config->unprocessedDir) == -1) {
+            if (movefile(filename, homeDir, unprocessedDir) == -1) {
                 perror("Error moving file");
                 return;
             }
@@ -61,8 +61,8 @@ int main(int argc, char *argv[]) {
 
     // Initialize directories
     semaphore_wait(sem_id);
-    if (!dirExists(config.unprocessedDir)) {
-        if (createDirectory(config.unprocessedDir) == -1) {
+    if (!dirExists(unprocessedDir)) {
+        if (createDirectory(unprocessedDir) == -1) {
             perror("Error creating unprocessed directory");
             semaphore_signal(sem_id);
             exit(EXIT_FAILURE);
