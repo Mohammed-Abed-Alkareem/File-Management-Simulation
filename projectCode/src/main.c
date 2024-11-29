@@ -270,6 +270,31 @@ int main(int argc, char *argv[]) {
 
 
 
+
+    
+    // create a message queue for the inspector 1 and calculator 
+    key_t msg_insp1_calc_key = ftok(".", 'J');
+    if (msg_insp1_calc_key == -1) {
+        perror("Message queue key generation failed");
+        cleanup();
+        exit(1);
+    }
+
+    int msg_insp1_calc_id = msgget(msg_insp1_calc_key, IPC_CREAT | 0666);
+    if (msg_insp1_calc_id == -1) {
+        perror("Message queue creation failed");
+        cleanup();
+        exit(1);
+    }
+
+    char msg_insp1_calc_key_str[20];
+    snprintf(msg_insp1_calc_key_str, sizeof(msg_insp1_calc_key_str), "%d", msg_insp1_calc_key);
+    setenv("MSG_QUEUE_I1C_KEY", msg_insp1_calc_key_str, 1);
+
+
+
+
+
     calculators_pid = (pid_t *)malloc(config.NUM_CALCULATORS * sizeof(pid_t));
     for (int i = 0; i < config.NUM_CALCULATORS; i++) {
         if ((calculators_pid[i] = fork()) == 0) {
@@ -301,6 +326,12 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
+    char msg_insp2_insp3_key_str[20];
+    snprintf(msg_insp2_insp3_key_str, sizeof(msg_insp2_insp3_key_str), "%d", msg_insp2_insp3_key);
+
+    setenv("MSG_QUEUE_I2I3_KEY", msg_insp2_insp3_key_str, 1);
+
+
 
     char msg_mover_insp2_key_str[20];
     snprintf(msg_mover_insp2_key_str, sizeof(msg_mover_insp2_key_str), "%d", msg_mover_insp2_key);
@@ -320,9 +351,11 @@ int main(int argc, char *argv[]) {
     }
 
     inspectors1_pid = (pid_t *)malloc(config.NUM_INSPECTOR1 * sizeof(pid_t));
+    char inspcetor_Number[20];
     for (int i = 0; i < config.NUM_INSPECTOR1; i++) {
         if ((inspectors1_pid[i] = fork()) == 0) {
-            execl("./bin/inspector1", "inspector1", argv[1],sem_inspector1_key_str, NULL);
+            sprintf(inspcetor_Number, "%d", i + 1);
+            execl("./bin/inspector1", "inspector1", argv[1],sem_inspector1_key_str ,inspcetor_Number, NULL);
             // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/inspector1", "inspector1", argv[1],sem_inspector1_key_str, NULL);
             perror("Inspector1 process failed");
             exit(1);
@@ -342,12 +375,15 @@ int main(int argc, char *argv[]) {
     inspectors3_pid = (pid_t *)malloc(config.NUM_INSPECTOR3 * sizeof(pid_t));
     for (int i = 0; i < config.NUM_INSPECTOR3; i++) {
         if ((inspectors3_pid[i] = fork()) == 0) {
-            execl("./bin/inspector3", "inspector3", argv[1], NULL);
+            execl("./bin/inspector3", "inspector3", argv[1] ,  NULL);
             // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/inspector3", "inspector3", argv[1], NULL);
             perror("Inspector3 process failed");
             exit(1);
         }
     }
+
+
+
 
     // Wait for all child processes to finish
     int total_processes = config.NUM_GENERATORS + config.NUM_CALCULATORS + config.NUM_MOVERS +

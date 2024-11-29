@@ -38,6 +38,21 @@ int main(int argc, char *argv[]) {
 
 
 
+    //access the message queue between clac and insp1
+    key_str = getenv("MSG_QUEUE_I1C_KEY");
+    if (key_str == NULL) {
+        fprintf(stderr, "Error: MSG_QUEUE_KEY not set.\n");
+        return 1;
+    }
+
+    key = atoi(key_str);
+    int msgid_insp1 = msgget(key, 0666);
+
+    if (msgid_insp1 == -1) {
+        perror("Message queue retrieval failed");
+        return 1;
+    }
+
     ////////////////////////////
     // Access the message queue
 
@@ -78,6 +93,21 @@ int main(int argc, char *argv[]) {
         sprintf(fileName, "%s/%d.csv", homeDir, file_number); // change the path if needed 
         printf("Calculator %d received file number: %d\n",getpid(), file_number);
         //calculate the average
+        
+
+        
+        // send the file number to the inspector 1 from 1 to the number of inspector1 as msg type
+        for (int i = 0; i < config.NUM_INSPECTOR1; i++) {
+            message.mtype = i + 1;
+            if (msgsnd(msgid_insp1, &message, sizeof(message.file_number), 0) == -1) {
+                perror("Message send failed");
+                return 1;
+            } else {
+                printf("Calculator %d sent file number to queue: %d\n", getpid(), file_number);
+            }
+        }
+
+
 
         calculateAvgCSV(fileName, file_number); 
         //when cannot open file skip
