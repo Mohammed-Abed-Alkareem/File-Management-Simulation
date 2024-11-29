@@ -16,7 +16,9 @@ void handle_signal(int sig) {
 void process_files_from_heap(MinHeap *heap, const Config *config) {
     if (heap->size > 0) {
         time_t min_time = get_min_time(heap);
-        if (min_time + config->INSPECTOR1_THRESHOLD > time(NULL)) {
+        if (min_time + config->INSPECTOR1_THRESHOLD > time(NULL)) { // if the sem is not aquired , if the file is processed 
+                                                                    // make sure to take the semaphor , if not taken , then remove it 
+                                                                    // from the heap 
             HeapNode min_node = min_heap_extract(heap);
 
             char filename[100];
@@ -33,6 +35,8 @@ void process_files_from_heap(MinHeap *heap, const Config *config) {
 }
 
 int main(int argc, char *argv[]) {
+
+    //sleep(500);
     if (argc != 3) {
         fprintf(stderr, "Usage: %s <config file> <semaphore key>\n", argv[0]);
         exit(EXIT_FAILURE);
@@ -105,7 +109,7 @@ int main(int argc, char *argv[]) {
             if (errno == ENOMSG) {
                 // No message in the queue, process files from the heap
                 process_files_from_heap(heap, &config);
-                sleep(1);
+                //sleep(1);
                 continue;
             } else {
                 perror("Message receive failed");

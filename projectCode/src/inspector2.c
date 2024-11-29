@@ -19,7 +19,7 @@ void process_files_from_heap(MinHeap *heap, const Config *config) {
         if (min_time + config->INSPECTOR2_THRESHOLD > time(NULL)) {
             HeapNode min_node = min_heap_extract(heap);
 
-            char filename[100];
+            char filename[20];
             sprintf(filename, "%d.csv", min_node.file_number);
 
             if (movefile(filename,processesdDir, backupDir ) == -1) {
@@ -99,13 +99,15 @@ int main(int argc, char *argv[]) {
 
     struct msgbuf2 message;
 
+
     // Main loop
     while (1) {
+
         if (msgrcv(msg_id, &message, sizeof(message.file_number) + sizeof(message.time), 1, IPC_NOWAIT) == -1) {
             if (errno == ENOMSG) {
                 // No message in the queue, process files from the heap
                 process_files_from_heap(heap, &config);
-                sleep(1);
+                //sleep(1);
                 continue;
             } else {
                 perror("Message receive failed");

@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
             if (errno == ENOMSG) {
                 // No message in the queue, process files from the heap
                 process_files_from_heap(heap, &config);
-                sleep(1);
+                //sleep(1);
                 continue;
             } else {
                 perror("Message receive failed");
