@@ -273,6 +273,9 @@ int main(int argc, char *argv[]) {
     setenv("MSG_QUEUE_MI2_KEY", msg_mover_insp2_key_str, 1);
 
 
+    // create the log dir and file 
+
+
 // ============Forking Processes==================
 
     // Fork generator processes
@@ -287,6 +290,11 @@ int main(int argc, char *argv[]) {
     }
     //wait for generator to create home dir
     pause();
+
+    
+    if(!dirExists(logDir)) {
+        createDirectory(logDir);
+    }
 
    
     // Fork calculator processes
