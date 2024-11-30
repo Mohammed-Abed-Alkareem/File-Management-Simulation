@@ -16,7 +16,9 @@ void handle_signal(int sig) {
 void process_files_from_heap(MinHeap *heap, const Config *config) {
     if (heap->size > 0) {
         time_t min_time = get_min_time(heap);
-        if (min_time + config->INSPECTOR1_THRESHOLD > time(NULL)) {
+        if (min_time + config->INSPECTOR1_THRESHOLD > time(NULL)) { // if the sem is not aquired , if the file is processed 
+                                                                    // make sure to take the semaphor , if not taken , then remove it 
+                                                                    // from the heap 
             HeapNode min_node = min_heap_extract(heap);
 
             char filename[100];
@@ -33,7 +35,9 @@ void process_files_from_heap(MinHeap *heap, const Config *config) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 3) {
+
+    //sleep(500);
+    if (argc != 4) {
         fprintf(stderr, "Usage: %s <config file> <semaphore key>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
@@ -51,6 +55,8 @@ int main(int argc, char *argv[]) {
         perror("Semaphore retrieval failed");
         exit(EXIT_FAILURE);
     }
+
+    int insp_number = atoi(argv[3]);
 
     // Get semaphore value
     int sem_value = semctl(sem_id, 0, GETVAL);
@@ -86,6 +92,25 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+
+    
+    //access the message queue between clac and insp1
+    key_str = getenv("MSG_QUEUE_I1C_KEY");
+    if (key_str == NULL) {
+        fprintf(stderr, "Error: MSG_QUEUE_KEY not set.\n");
+        return 1;
+    }
+
+    int key = atoi(key_str);
+    int msgid_insp1 = msgget(key, 0666);
+
+    if (msgid_insp1 == -1) {
+        perror("Message queue retrieval failed");
+        return 1;
+    }
+
+
+
     // Initialize min-heap
     heap = create_min_heap();
     if (!heap) {
@@ -98,14 +123,32 @@ int main(int argc, char *argv[]) {
     signal(SIGTERM, handle_signal);
 
     struct msgbuf2 message;
-
+    struct msgbuf calc_insp_msg ;
     // Main loop
     while (1) {
+        
+        //recive message from the calculator if there is any remove the node with file number from the heap
+        if (msgrcv(msgid_insp1, &calc_insp_msg, sizeof(calc_insp_msg.file_number), insp_number , IPC_NOWAIT) == -1) {
+            if (errno == ENOMSG) {
+                // No message in the queue, process files from the heap
+                
+                process_files_from_heap(heap, &config);
+                //sleep(1);
+                continue;
+            } else {
+                perror("Message receive failed");
+                break;
+            }
+        }else { // if there is a message from the calculator remove the file from the heap
+            remove_node(heap, calc_insp_msg.file_number);
+        }
+
+
         if (msgrcv(msg_id, &message, sizeof(message.file_number) + sizeof(message.time), 1, IPC_NOWAIT) == -1) {
             if (errno == ENOMSG) {
                 // No message in the queue, process files from the heap
                 process_files_from_heap(heap, &config);
-                sleep(1);
+                //sleep(1);
                 continue;
             } else {
                 perror("Message receive failed");

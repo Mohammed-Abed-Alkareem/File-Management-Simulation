@@ -15,5 +15,6 @@
 
 
 int main(int argc, char *argv[]);
+key_t key_generator(char letter);
 
 #endif // MAIN_H

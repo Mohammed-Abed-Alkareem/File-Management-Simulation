@@ -125,3 +125,27 @@ time_t get_min_time(MinHeap* heap) {
     }
     return heap->data[0].creation_time;
 }
+
+// remove a node from the heap by file number 
+void remove_node(MinHeap* heap, int file_number) {
+    if (!heap || heap->size == 0) {
+        fprintf(stderr, "Heap is empty\n");
+        return;
+    }
+
+    size_t i;
+    for (i = 0; i < heap->size; i++) {
+        if (heap->data[i].file_number == file_number) {
+            break;
+        }
+    }
+
+    if (i == heap->size) {
+        fprintf(stderr, "File number not found in heap\n");
+        return;
+    }
+
+    heap->data[i] = heap->data[heap->size - 1];
+    heap->size--;
+    min_heapify_down(heap, i);
+}

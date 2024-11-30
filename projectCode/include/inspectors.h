@@ -7,6 +7,10 @@
 
 int main (int argc , char * argv[]);
 
+struct msgbuf {
+    long mtype;        // Message type (must be > 0)
+    int file_number;   // The file number
+};
 
 struct msgbuf2 {
     long mtype;        // Message type (must be > 0)

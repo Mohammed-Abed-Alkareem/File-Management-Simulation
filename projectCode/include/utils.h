@@ -25,6 +25,6 @@ int createDirectory(const char *path);
 int movefile(const char *filename, const char* srcDir, const char* destDir);
 void semaphore_wait(int sem_id);
 void semaphore_signal(int sem_id);
-
+int deleteFile(const char *filename, const char* dir);
 #endif // UTILS_H
 

@@ -4,6 +4,9 @@
 Config config;
 int sem_id, msg_id; // Global for cleanup during signal handling
 MinHeap *heap;
+int msg_id_insp2_insp3;
+
+
 
 // Signal handler for cleanup
 void handle_signal(int sig) {
@@ -19,12 +22,26 @@ void process_files_from_heap(MinHeap *heap, const Config *config) {
         if (min_time + config->INSPECTOR2_THRESHOLD > time(NULL)) {
             HeapNode min_node = min_heap_extract(heap);
 
-            char filename[100];
+            char filename[20];
             sprintf(filename, "%d.csv", min_node.file_number);
+
 
             if (movefile(filename,processesdDir, backupDir ) == -1) {
                 perror("Error moving file");
                 return;
+            }
+
+            // send a message to inspector 3
+            struct msgbuf2 message_insp2_insp3;
+            message_insp2_insp3.mtype = 1;
+            message_insp2_insp3.file_number = min_node.file_number;
+            message_insp2_insp3.time = time(NULL);
+
+            if (msgsnd(msg_id_insp2_insp3, &message_insp2_insp3, sizeof(message_insp2_insp3.file_number) + sizeof(message_insp2_insp3.time), 0) == -1) {
+                perror("Message send failed");
+                exit(1);
+            } else {
+                printf("Inspector2 %d sent file number and time to queue: %d\n", getpid(), min_node.file_number);
             }
 
             printf("Mover %d moved file number: %d\n", getpid(), min_node.file_number);
@@ -86,6 +103,24 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+
+    // insp2 , inpsp3 message queue
+    char *key_str_insp2_insp3 = getenv("MSG_QUEUE_I2I3_KEY");
+    if (key_str_insp2_insp3 == NULL) {
+        fprintf(stderr, "Error: MSG_QUEUE_KEY not set.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int msg_key_insp2_insp3 = atoi(key_str_insp2_insp3);
+
+    // Get message queue ID
+    msg_id_insp2_insp3 = msgget(msg_key_insp2_insp3, 0666);
+    if (msg_id_insp2_insp3 == -1) {
+        perror("Message queue retrieval failed");
+        exit(EXIT_FAILURE);
+    }
+    
+
     // Initialize min-heap
     heap = create_min_heap();
     if (!heap) {
@@ -93,19 +128,22 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+
     // Set up signal handling for graceful termination
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
 
     struct msgbuf2 message;
 
+
     // Main loop
     while (1) {
+
         if (msgrcv(msg_id, &message, sizeof(message.file_number) + sizeof(message.time), 1, IPC_NOWAIT) == -1) {
             if (errno == ENOMSG) {
                 // No message in the queue, process files from the heap
                 process_files_from_heap(heap, &config);
-                sleep(1);
+                //sleep(1);
                 continue;
             } else {
                 perror("Message receive failed");

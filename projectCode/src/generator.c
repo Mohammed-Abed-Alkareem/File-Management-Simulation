@@ -96,14 +96,15 @@ if (file_counter == (void *)-1) {
 //     printf("Process %d: Current file_counter value: %d (address: %p)\n", getpid(), *file_counter, (void *)file_counter);
 // fflush(stdout);
 
-
+    //!! change this to be while loop for the current file num < total num of files
     for (int i = 0; i < 2; i++) {
-        sleep(1);
+        //sleep(1);
         semaphore_wait(sem_id);
         // printf("\033[0;34mProcess:%d => Semaphore value: %d\033[0m\n", getpid(), semctl(sem_id, 0, GETVAL));
         int file_number = (*file_counter)++;
         // printf("\033[0;31mProcess:%d => File number: %d\033[0m\n", getpid(), file_number);
         semaphore_signal(sem_id);
+        
 
         // printf("\033[0;31mProcess:%d => Generating CSV file: %d\033[0m\n", getpid(), file_number);
 
@@ -133,7 +134,7 @@ if (file_counter == (void *)-1) {
         }
         
 
-        sleep(5);
+        //sleep(5);
     }
 
     if (shmdt(file_counter) == -1) {
