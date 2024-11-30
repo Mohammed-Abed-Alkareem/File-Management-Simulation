@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
         perror("Message queue retrieval failed");
         return 1;
     }
-    #ifdef __DEBUG
+    #ifdef __CLI
     printf("key str %s\n" , key_str);
     printf ("cla key %d \n", key);
     printf("message queue id %d \n",msgid_generator);
@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
 
         file_number = message.file_number;//get the file number
         sprintf(fileName, "%s/%d.csv", homeDir, file_number); // change the path if needed 
-        #ifdef __DEBUG
+        #ifdef __CLI
         printf("Calculator %d received file number: %d\n",getpid(), file_number);
         #endif
         //calculate the average        
@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
                 perror("Message send failed");
                 return 1;
             } else {
-                #ifdef __DEBUG
+                #ifdef __CLI
                 printf("Calculator %d sent file number to queue: %d\n", getpid(), file_number);
                 #endif
             }
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
             perror("Message send failed");
             return 1;
         } else {
-            #ifdef __DEBUG
+            #ifdef __CLI
             printf("Calculator %d sent file number to queue: %d\n", getpid(), file_number);
             #endif
         }
@@ -182,7 +182,7 @@ float calculateAvgCSV(char *filename , int file_number) {
             col_index++;
         }
     }
-    #ifdef __DEBUG
+    #ifdef __CLI
     printf("exit file : %s \n ", filename);
     #endif
     fclose(file);
@@ -191,7 +191,7 @@ float calculateAvgCSV(char *filename , int file_number) {
 
     // Calculate and print the average for each column
     for (int i = 0; i < cols; i++) {
-            #ifdef __DEBUG
+            #ifdef __CLI
             printf("file: %s Column %d average: %.6f\n",filename , i + 1, sum[i] / count[i]);
             printf("file : %s Column %d has %d values\n", filename , i + 1, count[i]);
             #endif

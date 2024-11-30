@@ -88,7 +88,7 @@ int main (int argc , char * argv[]){
         }
 
         int file_number = message.file_number;//get the file number from the message
-        #ifdef __DEBUG
+        #ifdef __CLI
         printf("Mover %d received file number: %d\n",getpid(), file_number);
         #endif
         //move the file to the processed directory
@@ -105,7 +105,7 @@ int main (int argc , char * argv[]){
             perror("Message send failed");
             return 1;
         }
-        #ifdef __DEBUG
+        #ifdef __CLI
 
         printf("Mover %d moved file number: %d\n", getpid(), file_number);
         

@@ -383,7 +383,7 @@ void cleanup() {
     free(inspectors1_pid);
     free(inspectors2_pid);
     free(inspectors3_pid);
-    #ifdef __DEBUG
+    #ifdef __CLI
 
     printf("Resources cleaned up.\n");
     #endif
@@ -392,7 +392,7 @@ void cleanup() {
 
 // Signal handler for SIGUSR1 
 void handle_usr1(int signal) {
-    #ifdef __DEBUG
+    #ifdef __CLI
     printf("Received SIGUSR1 signal.%d\n", signal);
     printf("Generator process Created Home Dir.\n");
     #endif
@@ -402,7 +402,7 @@ void handle_usr1(int signal) {
 // Signal handler to cleanup resources and exit gracefully
 void handle_signal(int signal) {
     cleanup();
-    #ifdef __DEBUG
+    #ifdef __CLI
     printf("Exiting gracefully on signal %d.\n", signal);
     #endif
     exit(0);

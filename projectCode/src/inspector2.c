@@ -10,7 +10,7 @@ int msg_id_insp2_insp3;// Global message queue id for inspector2 and inspector3
 
 // Signal handler for cleanup
 void handle_signal(int sig) {
-    #ifdef __DEBUG
+    #ifdef __CLI
     printf("Cleaning up resources...\n");
     printf("Exiting gracefully on signal %d.\n", sig);
     #endif
@@ -44,11 +44,11 @@ void process_files_from_heap(MinHeap *heap, const Config *config) {
                 perror("Message send failed");
                 exit(1);
             } else {
-                #ifdef __DEBUG
+                #ifdef __CLI
                 printf("Inspector2 %d sent file number and time to queue: %d\n", getpid(), min_node.file_number);
                 #endif
             }
-            #ifdef __DEBUG
+            #ifdef __CLI
             printf("Mover %d moved file number: %d\n", getpid(), min_node.file_number);
 
             #endif
@@ -160,7 +160,7 @@ int main(int argc, char *argv[]) {
         }
 
         // Log message details
-        #ifdef __DEBUG
+        #ifdef __CLI
         printf("Inspector1: File Number: %d, Creation Time: %ld\n",
                message.file_number, (long)message.time);
         #endif

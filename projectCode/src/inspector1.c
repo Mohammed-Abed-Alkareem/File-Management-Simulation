@@ -7,7 +7,7 @@ MinHeap *heap;// Global for cleanup during signal handling
 
 // Signal handler for cleanup
 void handle_signal(int sig) {
-    #ifdef __DEBUG
+    #ifdef __CLI
     printf("Cleaning up resources...\n");
     printf("Exiting gracefully on signal %d.\n", sig);
     #endif
@@ -32,7 +32,7 @@ void process_files_from_heap(MinHeap *heap, const Config *config) {
                 return;
             }
 
-            #ifdef __DEBUG
+            #ifdef __CLI
             printf("Mover %d moved file number: %d\n", getpid(), min_node.file_number);
             #endif
         }
@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
             }
         }else {
                     // Log message details
-            #ifdef __DEBUG
+            #ifdef __CLI
             printf("Inspector1: File Number: %d, Creation Time: %ld\n",
                message.file_number, (long)message.time);
             #endif

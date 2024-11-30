@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
         perror("Semaphore retrieval failed");
         return 1;
     }
-    #ifdef __DEBUG
+    #ifdef __CLI
     printf("\033[0;31mProcess:%d => Generator process started\033[0m\n", getpid());
     #endif
 
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    #ifdef __DEBUG
+    #ifdef __CLI
    printf("Process %d: Attempting to retrieve shared memory with key: %d\n", getpid(), shm_key);
     #endif
     int shm_id = shmget(shm_key, sizeof(int), 0666);
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
         perror("Shared memory retrieval failed");
         return 1;
     }
-    #ifdef __DEBUG
+    #ifdef __CLI
     printf("Process %d: Retrieved shared memory with ID: %d\n", getpid(), shm_id);
     #endif
 
@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
             perror("Message send failed");
             exit(1);
         } else {
-            #ifdef __DEBUG
+            #ifdef __CLI
             printf("Process:%d => Sent file number to queue: %d\n", getpid(), message_calc.file_number);
             #endif
         }
@@ -126,7 +126,7 @@ int main(int argc, char *argv[]) {
             perror("Message send failed");
             exit(1);
         } else {
-            #ifdef __DEBUG
+            #ifdef __CLI
             printf("Process:%d => Sent file number and time to queue: %d\n", getpid(), message_insp1.file_number);
             #endif
         }
@@ -237,7 +237,7 @@ void generateCSV(int fileNum)
         }
 
         fclose(file);
-        #ifdef __DEBUG
+        #ifdef __CLI
         printf("\033[0;32mProcess:%d => CSV file: %s generated successfully\033[0m\n",getpid(), filename);
         #endif
        

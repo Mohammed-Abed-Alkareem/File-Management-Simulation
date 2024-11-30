@@ -33,7 +33,7 @@ int createDirectory(const char *path) {//function to create a directory
         printf("Error creating directory%s ", path);
         return -1;
     }
-    #ifdef __DEBUG
+    #ifdef __CLI
     printf("Directory %s created\n", path);
     #endif
     return 0;
@@ -61,7 +61,7 @@ int movefile(const char *filename, const char* srcDir, const char* destDir) {//f
         if (createDirectory(srcDir) == -1) {
             return -1;
         }
-        #ifdef __DEBUG
+        #ifdef __CLI
         printf("Directory %s created\n", srcDir);
         #endif
     }
@@ -71,7 +71,7 @@ int movefile(const char *filename, const char* srcDir, const char* destDir) {//f
         if (createDirectory(destDir) == -1) {
             return -1;
         }
-        #ifdef __DEBUG
+        #ifdef __CLI
         printf("Directory %s created\n", destDir);
         #endif
     }
@@ -79,7 +79,7 @@ int movefile(const char *filename, const char* srcDir, const char* destDir) {//f
 
       // Move the file
     if (rename(srcPath, destPath) == 0) {
-        #ifdef __DEBUG
+        #ifdef __CLI
         printf("File successfully moved: '%s' -> '%s'\n", srcPath, destPath);
         #endif
         return 0;
