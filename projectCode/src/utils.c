@@ -2,7 +2,7 @@
 
 #include "utils.h"
 
-int dirExists(const char *path) {
+int dirExists(const char *path) {//function to check if the directory exists
     struct stat info;
   
     if (stat(path, &info) != 0) {
@@ -14,7 +14,7 @@ int dirExists(const char *path) {
     return (info.st_mode & S_IFDIR) ? 1 : 0;
 }
 
-int fileExists(const char *path) {
+int fileExists(const char *path) {//function to check if the file exists
     struct stat info;
   
     if (stat(path, &info) != 0) {
@@ -27,28 +27,30 @@ int fileExists(const char *path) {
 }
 
 
-int createDirectory(const char *path) {
+int createDirectory(const char *path) {//function to create a directory
 
     if (mkdir(path, 0777) == -1) {
         printf("Error creating directory%s ", path);
         return -1;
     }
+    #ifdef __DEBUG
     printf("Directory %s created\n", path);
+    #endif
     return 0;
 }
 
-int movefile(const char *filename, const char* srcDir, const char* destDir) {
+int movefile(const char *filename, const char* srcDir, const char* destDir) {//function to move a file from one directory to another
     char srcPath[100];
     char destPath[100];
     sprintf(srcPath, "%s/%s", srcDir, filename);
     sprintf(destPath, "%s/%s", destDir, filename);
 
-    if (!fileExists(srcPath)) {
+    if (!fileExists(srcPath)) {//check if the source file exists
         perror("Source file does not exist");
         return -1;
     }
 
-    if (fileExists(destPath)) {
+    if (fileExists(destPath)) {//check if the destination file exists
         perror("Destination file already exists");
         return -1;
     }
@@ -59,7 +61,9 @@ int movefile(const char *filename, const char* srcDir, const char* destDir) {
         if (createDirectory(srcDir) == -1) {
             return -1;
         }
+        #ifdef __DEBUG
         printf("Directory %s created\n", srcDir);
+        #endif
     }
 
     if (!dirExists(destDir)) {
@@ -67,13 +71,17 @@ int movefile(const char *filename, const char* srcDir, const char* destDir) {
         if (createDirectory(destDir) == -1) {
             return -1;
         }
+        #ifdef __DEBUG
         printf("Directory %s created\n", destDir);
+        #endif
     }
 
 
       // Move the file
     if (rename(srcPath, destPath) == 0) {
+        #ifdef __DEBUG
         printf("File successfully moved: '%s' -> '%s'\n", srcPath, destPath);
+        #endif
         return 0;
     } else {
         perror("Error moving file");

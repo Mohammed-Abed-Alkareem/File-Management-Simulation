@@ -12,12 +12,12 @@
 #include <sys/wait.h>
 
 // --- Globals ---
-pid_t *generators_pid;
-pid_t *calculators_pid;
-pid_t *movers_pid;
-pid_t *inspectors1_pid;
-pid_t *inspectors2_pid;
-pid_t *inspectors3_pid;
+pid_t *generators_pid;//array of generators pid
+pid_t *calculators_pid;//array of calculators pid
+pid_t *movers_pid;//array of movers pid
+pid_t *inspectors1_pid;//array of inspector1 pid
+pid_t *inspectors2_pid;//array of inspector2 pid
+pid_t *inspectors3_pid;//array of inspector3 pid
 
 
 
@@ -50,7 +50,7 @@ int msg_insp1_calc_id = -1;
 
 // --- Main ---
 int main(int argc, char *argv[]) {
-    Config config;
+    Config config;// Configuration
 
     // validate arguments
     if (argc != 2) {
@@ -65,14 +65,14 @@ int main(int argc, char *argv[]) {
     }
 
     // Create files directory
-    if(!dirExists(filesDir)) {
-        createDirectory(filesDir);
+    if(!dirExists(filesDir)) {//check if the files directory exists
+        createDirectory(filesDir);//create the files directory
     }
 
     // Register signal handlers
-    signal(SIGINT, handle_signal);
-    signal(SIGTERM, handle_signal);
-    signal(SIGUSR1, handle_usr1);
+    signal(SIGINT, handle_signal);//handle the signal SIGINT
+    signal(SIGTERM, handle_signal);//handle the signal SIGTERM
+    signal(SIGUSR1, handle_usr1);// handle the signal SIGUSR1
 
 
 // ============Shmem Between Generators==================
@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
     shm_gen_key = key_generator('A');
 
     // num of file generated .
-    shm_id = shmget(shm_gen_key, sizeof(int), IPC_CREAT | 0666);
+    shm_id = shmget(shm_gen_key, sizeof(int), IPC_CREAT | 0666);//create the shared memory
     if (shm_id == -1) {
         perror("Shared memory creation failed");
         cleanup();
@@ -88,14 +88,14 @@ int main(int argc, char *argv[]) {
     }
 
     // Attach shared memory to file_counter
-    int *file_counter = (int *)shmat(shm_id, NULL, 0);
+    int *file_counter = (int *)shmat(shm_id, NULL, 0);//attach the shared memory
     if (file_counter == (void *)-1) {
         perror("Shared memory attach failed");
         cleanup();
         exit(1);
     }
     *file_counter = 0; // Initialize counter
-    shmdt(file_counter);
+    shmdt(file_counter);//detach the shared memory
 
 
 // ============Semaphores==================
@@ -103,31 +103,30 @@ int main(int argc, char *argv[]) {
     // Create semaphore key for generator
     sem_gen_key = key_generator('B');
 
-    sem_id = semget(sem_gen_key, 1, IPC_CREAT | 0666);
+    sem_id = semget(sem_gen_key, 1, IPC_CREAT | 0666);//create the semaphore for the generator
     if (sem_id == -1) {
         perror("Semaphore creation failed");
         cleanup();
         exit(1);
     }
 
-    if (semctl(sem_id, 0, SETVAL, 1) == -1) {
+    if (semctl(sem_id, 0, SETVAL, 1) == -1) {//initialize the semaphore for the generator
         perror("Semaphore initialization failed");
         cleanup();
         exit(1);
     }
-    // printf("Semaphore initialized with key: %d and id: %d.\n", sem_gen_key, sem_id);
-
+  
 
     // Create semaphore key for inspector1
     sem_inspector1_key = key_generator('C');
 
-    sem_inspector1_id = semget(sem_inspector1_key, 1, IPC_CREAT | 0666);
-    if (sem_inspector1_id == -1) {
+    sem_inspector1_id = semget(sem_inspector1_key, 1, IPC_CREAT | 0666);//create the semaphore for the inspector1
+    if (sem_inspector1_id == -1) {//check if the semaphore is created
         perror("Semaphore creation failed");
-        cleanup();
+        cleanup();//clean up the resources
         exit(1);
     }
-    if (semctl(sem_inspector1_id, 0, SETVAL, 1) == -1) {
+    if (semctl(sem_inspector1_id, 0, SETVAL, 1) == -1) {//initialize the semaphore for inspector1
         perror("Semaphore initialization failed");
         cleanup();
         exit(1);
@@ -136,7 +135,7 @@ int main(int argc, char *argv[]) {
     // Create semaphore key for inspector2
     sem_inspector2_key = key_generator('D');
 
-    sem_inspector2_id = semget(sem_inspector2_key, 1, IPC_CREAT | 0666);
+    sem_inspector2_id = semget(sem_inspector2_key, 1, IPC_CREAT | 0666);//create the semaphore for the inspector2
     if (sem_inspector2_id == -1) {
         perror("Semaphore creation failed");
         cleanup();
@@ -151,7 +150,7 @@ int main(int argc, char *argv[]) {
     // Create semaphore key for mover
     sem_mover_key = key_generator('E');
  
-    sem_mover_id = semget(sem_mover_key, 1, IPC_CREAT | 0666);
+    sem_mover_id = semget(sem_mover_key, 1, IPC_CREAT | 0666);//create the semaphore for the mover
     if (sem_mover_id == -1) {
         perror("Semaphore creation failed");
         cleanup();
@@ -169,7 +168,7 @@ int main(int argc, char *argv[]) {
     // Create message queue key between generator and calculator
     msg_gen_calc_key = key_generator('F');
 
-    msg_gen_calc_id = msgget(msg_gen_calc_key, IPC_CREAT | 0666);
+    msg_gen_calc_id = msgget(msg_gen_calc_key, IPC_CREAT | 0666); //create the message queue between generator and calculator
     if (msg_gen_calc_id == -1) {
         perror("Message queue creation failed");
         cleanup();
@@ -265,12 +264,12 @@ int main(int argc, char *argv[]) {
   
 
     // Set environment variables
-    setenv("MSG_QUEUE_GC_KEY", msg_gen_calc_key_str, 1);
-    setenv("MSG_QUEUE_GI1_KEY", msg_gen_insp1_key_str, 1);
-    setenv("MSG_QUEUE_CM_KEY", msg_calc_mover_key_str, 1);
-    setenv("MSG_QUEUE_I1C_KEY", msg_insp1_calc_key_str, 1);
-    setenv("MSG_QUEUE_I2I3_KEY", msg_insp2_insp3_key_str, 1);
-    setenv("MSG_QUEUE_MI2_KEY", msg_mover_insp2_key_str, 1);
+    setenv("MSG_QUEUE_GC_KEY", msg_gen_calc_key_str, 1);//set the environment variable for the message queue key between generator and calculator
+    setenv("MSG_QUEUE_GI1_KEY", msg_gen_insp1_key_str, 1);//set the environment variable for the message queue key between generator and inspector1
+    setenv("MSG_QUEUE_CM_KEY", msg_calc_mover_key_str, 1);//set the environment variable for the message queue key between calculator and mover
+    setenv("MSG_QUEUE_I1C_KEY", msg_insp1_calc_key_str, 1);//set the environment variable for the message queue key between inspector1 and calculator
+    setenv("MSG_QUEUE_I2I3_KEY", msg_insp2_insp3_key_str, 1);//set the environment variable for the message queue key between inspector2 and inspector3
+    setenv("MSG_QUEUE_MI2_KEY", msg_mover_insp2_key_str, 1);//set the environment variable for the message queue key between mover and inspector2
 
 
 // ============Forking Processes==================
@@ -384,25 +383,32 @@ void cleanup() {
     free(inspectors1_pid);
     free(inspectors2_pid);
     free(inspectors3_pid);
+    #ifdef __DEBUG
 
     printf("Resources cleaned up.\n");
+    #endif
 }
+
 
 // Signal handler for SIGUSR1 
 void handle_usr1(int signal) {
+    #ifdef __DEBUG
     printf("Received SIGUSR1 signal.%d\n", signal);
     printf("Generator process Created Home Dir.\n");
+    #endif
     
 }
 
 // Signal handler to cleanup resources and exit gracefully
 void handle_signal(int signal) {
     cleanup();
+    #ifdef __DEBUG
     printf("Exiting gracefully on signal %d.\n", signal);
+    #endif
     exit(0);
 }
 
-
+// Function to generate a key
 key_t key_generator(char letter){
 
     key_t key = ftok(".", letter) ;

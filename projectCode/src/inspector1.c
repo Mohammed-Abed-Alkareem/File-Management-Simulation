@@ -1,43 +1,46 @@
 #include "inspectors.h"
 
 
-Config config;
+Config config;// Global variable for the configuration
 int sem_id, msg_id; // Global for cleanup during signal handling
-MinHeap *heap;
+MinHeap *heap;// Global for cleanup during signal handling
 
 // Signal handler for cleanup
 void handle_signal(int sig) {
+    #ifdef __DEBUG
     printf("Cleaning up resources...\n");
     printf("Exiting gracefully on signal %d.\n", sig);
-    if (heap) free_min_heap(heap);
+    #endif
+    if (heap) free_min_heap(heap);//free the heap
     exit(0);
 }
 
 // Function to process files from the heap
 void process_files_from_heap(MinHeap *heap, const Config *config) {
     if (heap->size > 0) {
-        time_t min_time = get_min_time(heap);
+        time_t min_time = get_min_time(heap);//get the time of the first node
         if (min_time + config->INSPECTOR1_THRESHOLD < time(NULL)) { // if the sem is not aquired , if the file is processed 
                                                                     // make sure to take the semaphor , if not taken , then remove it 
                                                                     // from the heap 
-            HeapNode min_node = min_heap_extract(heap);
+            HeapNode min_node = min_heap_extract(heap);//extract the minimum node from the heap
 
             char filename[100];
-            sprintf(filename, "%d.csv", min_node.file_number);
+            sprintf(filename, "%d.csv", min_node.file_number);///get the file name
 
-            if (movefile(filename, homeDir, unprocessedDir) == -1) {
+            if (movefile(filename, homeDir, unprocessedDir) == -1) {//move the file to the unprocessed directory
                 perror("Error moving file");
                 return;
             }
 
+            #ifdef __DEBUG
             printf("Mover %d moved file number: %d\n", getpid(), min_node.file_number);
+            #endif
         }
     }
 }
 
 int main(int argc, char *argv[]) {
-
-    //sleep(500);
+    // Check the number of arguments
     if (argc != 4) {
         fprintf(stderr, "Usage: %s <config file> <semaphore key>\n", argv[0]);
         exit(EXIT_FAILURE);
@@ -57,7 +60,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    int insp_number = atoi(argv[3]);
+    int insp_number = atoi(argv[3]);//get the inspector number
 
     // Get semaphore value
     int sem_value = semctl(sem_id, 0, GETVAL);
@@ -67,27 +70,27 @@ int main(int argc, char *argv[]) {
     }
 
     // Initialize directories
-    semaphore_wait(sem_id);
-    if (!dirExists(unprocessedDir)) {
-        if (createDirectory(unprocessedDir) == -1) {
+    semaphore_wait(sem_id);//lock the semaphore
+    if (!dirExists(unprocessedDir)) {//check if the unprocessed directory exists
+        if (createDirectory(unprocessedDir) == -1) {//create the unprocessed directory
             perror("Error creating unprocessed directory");
-            semaphore_signal(sem_id);
+            semaphore_signal(sem_id);//unlock the semaphore
             exit(EXIT_FAILURE);
         }
     }
-    semaphore_signal(sem_id);
+    semaphore_signal(sem_id);//unlock the semaphore
 
     // Retrieve message queue key from environment
-    char *key_str = getenv("MSG_QUEUE_GI1_KEY");
+    char *key_str = getenv("MSG_QUEUE_GI1_KEY");//get the key of the message queue between generator and inspector1
     if (key_str == NULL) {
         fprintf(stderr, "Error: MSG_QUEUE_KEY not set.\n");
         exit(EXIT_FAILURE);
     }
 
-    int msg_key = atoi(key_str);
+    int msg_key = atoi(key_str);//convert the key to integer
 
     // Get message queue ID
-    msg_id = msgget(msg_key, 0666);
+    msg_id = msgget(msg_key, 0666);//get the message queue id
     if (msg_id == -1) {
         perror("Message queue retrieval failed");
         exit(EXIT_FAILURE);
@@ -96,14 +99,14 @@ int main(int argc, char *argv[]) {
 
     
     //access the message queue between clac and insp1
-    key_str = getenv("MSG_QUEUE_I1C_KEY");
+    key_str = getenv("MSG_QUEUE_I1C_KEY");//get the key of the message queue between inspector1 and calculator
     if (key_str == NULL) {
         fprintf(stderr, "Error: MSG_QUEUE_KEY not set.\n");
         return 1;
     }
 
-    int key = atoi(key_str);
-    int msgid_insp1 = msgget(key, 0666);
+    int key = atoi(key_str);//convert the key to integer
+    int msgid_insp1 = msgget(key, 0666);//get the message queue id
 
     if (msgid_insp1 == -1) {
         perror("Message queue retrieval failed");
@@ -120,32 +123,33 @@ int main(int argc, char *argv[]) {
     }
 
     // Set up signal handling for graceful termination
-    signal(SIGINT, handle_signal);
-    signal(SIGTERM, handle_signal);
-
+    signal(SIGINT, handle_signal);//handle the signal SIGINT
+    signal(SIGTERM, handle_signal);//handle the signal SIGTERM
+    
+    // Message buffer
     struct msgbuf2 message;
     struct msgbuf calc_insp_msg ;
     // Main loop
     while (1) {
-        usleep(20000);
+        usleep(20000);//sleep for 20 ms
 
         
-        if (msgrcv(msg_id, &message, sizeof(message.file_number) + sizeof(message.time), 1, IPC_NOWAIT) == -1) {
+        if (msgrcv(msg_id, &message, sizeof(message.file_number) + sizeof(message.time), 1, IPC_NOWAIT) == -1) {//receive the message from the generator with type 1
             if (errno == ENOMSG) {
                 // No message in the queue, process files from the heap
                 process_files_from_heap(heap, &config);
-                //sleep(1);
-                //continue;
+                
             } else {
                 perror("Message receive failed");
                 break;
             }
         }else {
                     // Log message details
+            #ifdef __DEBUG
             printf("Inspector1: File Number: %d, Creation Time: %ld\n",
                message.file_number, (long)message.time);
-
-                        // Insert received message into the heap
+            #endif
+            // Insert received message into the heap
             min_heap_insert(heap, message.file_number, message.time);
 
             // Process files from the heap
@@ -159,10 +163,7 @@ int main(int argc, char *argv[]) {
         if (msgrcv(msgid_insp1, &calc_insp_msg, sizeof(calc_insp_msg.file_number), insp_number , IPC_NOWAIT) == -1) {
             if (errno == ENOMSG) {
                 // No message in the queue, process files from the heap
-                
                 process_files_from_heap(heap, &config);
-                //sleep(1);
-                //continue;
             } else {
                 perror("Message receive failed");
                 break;
