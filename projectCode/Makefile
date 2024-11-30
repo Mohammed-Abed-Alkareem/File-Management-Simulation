@@ -5,6 +5,25 @@ SRC_DIR = src
 OBJ_DIR = obj
 BIN_DIR = bin
 
+
+ifdef __CLI
+    CFLAGS += -D__CLI
+    $(info "there will be print statements")
+else
+    ifneq ($(MAKECMDGOALS),)
+        ifneq ($(MAKECMDGOALS),clean)
+            $(info "there will be no print statements")
+            $(info "Don't forget to add __CLI flag to compile the CLI version")
+        endif
+    else
+        $(info "there will be no print statements")
+            $(info "Don't forget to add __CLI flag to compile the CLI version")
+    endif
+endif
+
+
+        
+
 # Programs
 MAIN_EXE = $(BIN_DIR)/file-management-simulation
 SUB_PROGRAMS = $(BIN_DIR)/calculator $(BIN_DIR)/generator \
