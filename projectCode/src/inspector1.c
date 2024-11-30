@@ -128,6 +128,33 @@ int main(int argc, char *argv[]) {
     // Main loop
     while (1) {
         usleep(20000);
+
+        
+        if (msgrcv(msg_id, &message, sizeof(message.file_number) + sizeof(message.time), 1, IPC_NOWAIT) == -1) {
+            if (errno == ENOMSG) {
+                // No message in the queue, process files from the heap
+                process_files_from_heap(heap, &config);
+                //sleep(1);
+                //continue;
+            } else {
+                perror("Message receive failed");
+                break;
+            }
+        }else {
+                    // Log message details
+            printf("Inspector1: File Number: %d, Creation Time: %ld\n",
+               message.file_number, (long)message.time);
+
+                        // Insert received message into the heap
+            min_heap_insert(heap, message.file_number, message.time);
+
+            // Process files from the heap
+            process_files_from_heap(heap, &config);
+
+        }
+
+
+
         //recive message from the calculator if there is any remove the node with file number from the heap
         if (msgrcv(msgid_insp1, &calc_insp_msg, sizeof(calc_insp_msg.file_number), insp_number , IPC_NOWAIT) == -1) {
             if (errno == ENOMSG) {
@@ -135,7 +162,7 @@ int main(int argc, char *argv[]) {
                 
                 process_files_from_heap(heap, &config);
                 //sleep(1);
-                continue;
+                //continue;
             } else {
                 perror("Message receive failed");
                 break;
@@ -145,27 +172,8 @@ int main(int argc, char *argv[]) {
         }
 
 
-        if (msgrcv(msg_id, &message, sizeof(message.file_number) + sizeof(message.time), 1, IPC_NOWAIT) == -1) {
-            if (errno == ENOMSG) {
-                // No message in the queue, process files from the heap
-                process_files_from_heap(heap, &config);
-                //sleep(1);
-                continue;
-            } else {
-                perror("Message receive failed");
-                break;
-            }
-        }
 
-        // Log message details
-        printf("Inspector1: File Number: %d, Creation Time: %ld\n",
-               message.file_number, (long)message.time);
 
-        // Insert received message into the heap
-        min_heap_insert(heap, message.file_number, message.time);
-
-        // Process files from the heap
-        process_files_from_heap(heap, &config);
     }
 
     // Cleanup resources

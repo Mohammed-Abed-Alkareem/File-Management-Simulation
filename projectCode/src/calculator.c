@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
         // Receive a message from the queue
  
         //print the key of the message queue and message id
-        usleep(50000);
+        usleep(20000);
 
 
         if (msgrcv(msgid_generator, &message, sizeof(message.file_number), 1, 0) < 0) {

@@ -80,6 +80,7 @@ int main (int argc , char * argv[]){
     struct msgbuf2 message2;
 
     while (1) {
+        usleep(20000);
         if (msgrcv(msgid_mover, &message, sizeof(message.file_number), 1, 0) == -1) {
             perror("Error receiving message from queue");
             return 1;
