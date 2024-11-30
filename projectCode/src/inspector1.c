@@ -17,7 +17,7 @@ void handle_signal(int sig) {
 void process_files_from_heap(MinHeap *heap, const Config *config) {
     if (heap->size > 0) {
         time_t min_time = get_min_time(heap);
-        if (min_time + config->INSPECTOR1_THRESHOLD > time(NULL)) { // if the sem is not aquired , if the file is processed 
+        if (min_time + config->INSPECTOR1_THRESHOLD < time(NULL)) { // if the sem is not aquired , if the file is processed 
                                                                     // make sure to take the semaphor , if not taken , then remove it 
                                                                     // from the heap 
             HeapNode min_node = min_heap_extract(heap);
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
     struct msgbuf calc_insp_msg ;
     // Main loop
     while (1) {
-        
+        usleep(20000);
         //recive message from the calculator if there is any remove the node with file number from the heap
         if (msgrcv(msgid_insp1, &calc_insp_msg, sizeof(calc_insp_msg.file_number), insp_number , IPC_NOWAIT) == -1) {
             if (errno == ENOMSG) {

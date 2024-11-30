@@ -17,7 +17,7 @@ void handle_signal(int sig) {
 void process_files_from_heap(MinHeap *heap, const Config *config) {
     if (heap->size > 0) {
         time_t min_time = get_min_time(heap);
-        if (min_time + config->INSPECTOR3_THRESHOLD > time(NULL)) {
+        if (min_time + config->INSPECTOR3_THRESHOLD < time(NULL)) {
             HeapNode min_node = min_heap_extract(heap);
 
             char filename[20];
@@ -78,6 +78,7 @@ int main(int argc, char *argv[]) {
     printf("\n\nInspector3: Started\n");
     // Main loop
     while (1) {
+        usleep(20000);
         if (msgrcv(msg_id, &message, sizeof(message.file_number) + sizeof(message.time), 1, IPC_NOWAIT) == -1) {
             if (errno == ENOMSG) {
                 //printf("\n\nInspector3: No message in the queue\n");
