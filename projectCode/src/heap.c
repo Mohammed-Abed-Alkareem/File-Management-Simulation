@@ -202,3 +202,21 @@ void setCalculated(MinHeap* heap, int file_number) {
     min_heap_insert(heap, file_number, 0);
     setCalculated(heap, file_number);
 }
+
+
+int find_node(MinHeap* heap, int file_number)
+{
+    if (!heap || heap->size == 0) {
+        fprintf(stderr, "Heap is empty\n");
+        return -1;
+    }
+
+    for (size_t i = 0; i < heap->size; i++) {
+        if (heap->data[i].file_number == file_number) {
+            return i;
+        }
+    }
+
+    fprintf(stderr, "File number not found in heap\n");
+    return -1;
+}

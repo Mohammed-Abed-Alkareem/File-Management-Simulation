@@ -4,7 +4,7 @@ Config config;
 //const char *logFileSem = "/logFileSem";
 int shm_data_id;
 int sem_data_id;
-
+SharedData *shared_data ;
 
 
 int main(int argc, char *argv[]) {
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
     }
 
     //Attach shared memory to shared_data
-    SharedData *shared_data = (SharedData *)shmat(shm_data_id, NULL, 0);
+    shared_data = (SharedData *)shmat(shm_data_id, NULL, 0);
     if (shared_data == (void *)-1) {
         perror("Shared memory attach failed");
         exit(EXIT_FAILURE);
@@ -157,12 +157,11 @@ int main(int argc, char *argv[]) {
 
 
 
-        calculateAvgCSV(fileName, file_number); 
+        if (calculateAvgCSV(fileName, file_number) == -1 ){
+            continue;
+        } 
 
-        semaphore_wait(sem_data_id);
-        shared_data->total_csv_calculated++;
 
-        semaphore_signal(sem_data_id);
 
         //when cannot open file skip
         //sleep(2);//dummy 
@@ -209,7 +208,16 @@ float calculateAvgCSV(char *filename , int file_number) {
         exit(1);
     }
     // change to try wait if not aquiared move on .
-    sem_wait(sem);// lock the semaphore
+    // try wait if not aquired then move on
+    if (sem_trywait(sem) == -1) {
+        sem_close(sem);
+        return -1;
+    }
+
+
+
+
+
     float *sum = (float *)malloc(cols * sizeof(float)); // Array to hold the sums for each column
     int *count = (int *)malloc(cols * sizeof(int)); // Array to hold the count of valid numbers for each column
 
@@ -238,23 +246,25 @@ float calculateAvgCSV(char *filename , int file_number) {
         }
         rows++;
     }
-    printf("exit file : %s \n ", filename);
+    // printf("exit file : %s \n ", filename);
     fclose(file);
-    sem_post(sem);// release the semaphore
+
+    //!!!!
+    //sem_post(sem);// release the semaphore
     sem_close(sem); // close the semaphore
 
-    // Calculate and print the average for each column
-    for (int i = 0; i < cols; i++) {
-            if (count[i] == 0) {
+    // // Calculate and print the average for each column
+    // for (int i = 0; i < cols; i++) {
+    //         if (count[i] == 0) {
 
-                printf("file: %s Column %d average: %.6f\n",filename , i + 1, 0.0);
-                printf("file : %s Column %d has %d values\n", filename , i + 1, 0);
-                continue;
-            }
-            printf("file: %s Column %d average: %.6f\n",filename , i + 1, sum[i] / count[i]);
-            printf("file : %s Column %d has %d values\n", filename , i + 1, count[i]);
+    //             //printf("file: %s Column %d average: %.6f\n",filename , i + 1, 0.0);
+    //             //printf("file : %s Column %d has %d values\n", filename , i + 1, 0);
+    //             continue;
+    //         }
+    //         //printf("file: %s Column %d average: %.6f\n",filename , i + 1, sum[i] / count[i]);
+    //         //printf("file : %s Column %d has %d values\n", filename , i + 1, count[i]);
          
-    }
+    // }
 
     // Acquire the log file semaphore
 
@@ -292,9 +302,17 @@ float calculateAvgCSV(char *filename , int file_number) {
     printf("Log file closed\n");
 
     sem_post(log_sem); // Release the semaphore
+
     printf("Log semaphore released\n");
     sem_close(log_sem); // Close the semaphore
+    
+    semaphore_wait(sem_data_id);
+    shared_data->total_csv_calculated++;
+    semaphore_signal(sem_data_id);
+    
     printf("Log semaphore closed\n");
+
+    
 
 
     free(sum); // Free the allocated memory for sums

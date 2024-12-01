@@ -20,7 +20,9 @@ pid_t *movers_pid;
 pid_t *inspectors1_pid;
 pid_t *inspectors2_pid;
 pid_t *inspectors3_pid;
+pid_t gui_id;
 
+SharedData *shared_data;
 
 
 // --- IPC keys ---
@@ -79,6 +81,7 @@ int main(int argc, char *argv[]) {
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
     signal(SIGUSR1, handle_usr1);
+    signal(SIGUSR2, handle_usr1);
 
 
 // ============shared memories==================
@@ -115,7 +118,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Attach shared memory to shared_data
-    SharedData *shared_data = (SharedData *)shmat(shm_data_id, NULL, 0);
+    shared_data = (SharedData *)shmat(shm_data_id, NULL, 0);
     if (shared_data == (void *)-1) {
         perror("Shared memory attach failed");
         cleanup();
@@ -332,15 +335,15 @@ int main(int argc, char *argv[]) {
 // ============Forking Processes==================
 
         //fork the GUI process
-    pid_t gui_id;
+
     if((gui_id=fork()) == 0){
         execl("./bin/gui", "gui", argv[1], NULL);
         // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/gui", "gui", argv[1], NULL);
         perror("GUI process failed");
         exit(1);
     }
-sleep(10);
 
+    pause();
     // Fork generator processes
     generators_pid = (pid_t *)malloc(config.NUM_GENERATORS * sizeof(pid_t));
     for (int i = 0; i < config.NUM_GENERATORS; i++) {
@@ -484,6 +487,16 @@ sleep(10);
 
 // cleanup function to remove all allocated resources
 void cleanup() {
+
+    sem_unlink(logFileSem); // Unlink the log semaphore
+
+    for (int i =0 ; i< shared_data->total_csv_generated; i++){
+        char named_sem[100];
+        sprintf(named_sem, "sem_%d", i);
+        sem_unlink(named_sem);
+
+    }
+
     if (shm_id != -1) shmctl(shm_id, IPC_RMID, NULL);
     if (sem_id != -1) semctl(sem_id, 0, IPC_RMID);
     if (msg_gen_calc_id != -1) msgctl(msg_gen_calc_id, IPC_RMID, NULL);
@@ -506,13 +519,19 @@ void cleanup() {
     free(inspectors2_pid);
     free(inspectors3_pid);
 
+
+
+
     printf("Resources cleaned up.\n");
 }
 
 // Signal handler for SIGUSR1 
 void handle_usr1(int signal) {
+    if (signal != SIGUSR1) return;
     printf("Received SIGUSR1 signal.%d\n", signal);
     printf("Generator process Created Home Dir.\n");
+    kill(gui_id, SIGUSR1);
+
     
 }
 

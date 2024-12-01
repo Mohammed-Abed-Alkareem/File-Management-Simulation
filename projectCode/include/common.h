@@ -21,6 +21,8 @@
 #include <semaphore.h>
 #include <fcntl.h>
 #include <math.h>
+#include <limits.h>
+
 
 typedef struct {
     int total_csv_generated;

@@ -17,17 +17,33 @@ void handle_signal(int sig) {
 
 // Function to process files from the heap
 void process_files_from_heap(MinHeap *heap, const Config *config) {
+
     if (heap->size > 0) {
         time_t min_time = get_min_time(heap);
+         //open the named semaphore that is created by the generator wich coresponed to the file number
+ 
+
         if (min_time + config->INSPECTOR1_THRESHOLD < time(NULL)) { // if the sem is not aquired , if the file is processed 
                                                                     // make sure to take the semaphor , if not taken , then remove it 
                                                                     // from the heap 
-            
-            // if the node is calculated then return 
-            if (isCalculated(heap, heap->data[0].file_number) == 1) {
-                remove_node(heap, heap->data[0].file_number);
-                return;
-            }
+
+        char sem_name[150];
+        sprintf(sem_name, "/sem_%d", heap->data[0].file_number);
+        // open the named semaphore
+        sem_t *sem = sem_open(sem_name, O_CREAT, 0666, 1);
+        if (sem == SEM_FAILED) {
+            perror("Semaphore creation failed");
+            exit(1);
+        }
+
+
+        // aquire the semaphore if not aquired then remove the file from the heap and return 
+        if (sem_trywait(sem) == -1) {
+            remove_node(heap, heap->data[0].file_number);
+            sem_close(sem);
+            return;
+        }                                                       
+
 
             HeapNode min_node = min_heap_extract(heap);
 
@@ -192,24 +208,30 @@ int main(int argc, char *argv[]) {
         
         if (msgrcv(msg_id, &message, sizeof(message.file_number) + sizeof(message.time), 1, IPC_NOWAIT) == -1) {
             if (errno != ENOMSG) {
-
                 perror("Message receive failed");
                 break;
             }
         }else {
+                
                     // Log message details
             printf("Inspector1: File Number: %d, Creation Time: %ld\n",
                message.file_number, (long)message.time);
 
-                        // Insert received message into the heap
-            min_heap_insert(heap, message.file_number, message.time);
 
+            if (find_node(heap, message.file_number) != -1) {
+                printf("\033[0;31mFile number already in heap %d\033[0m\n", message.file_number);
+                remove_node(heap, message.file_number);
+            }else {
+                        // Insert received message into the heap
+                min_heap_insert(heap, message.file_number, message.time);
+            }
             // Process files from the heap
             //process_files_from_heap(heap, &config);
 
         }
 
 
+        
 
         //recive message from the calculator if there is any remove the node with file number from the heap
         if (msgrcv(msgid_insp1, &calc_insp_msg, sizeof(calc_insp_msg.file_number), insp_number , IPC_NOWAIT) == -1) {
@@ -218,12 +240,21 @@ int main(int argc, char *argv[]) {
                 break;
             }
         }else { // if there is a message from the calculator remove the file from the heap
-            remove_node(heap, calc_insp_msg.file_number);
-            
+            if (find_node(heap, calc_insp_msg.file_number) == -1) {
+                fprintf(stderr, "File number not found in heap\n");
+                // add the file with time inf to the heap
+                printf("\033[0;31mFile not in the heap %d\033[0m\n", message.file_number);
+
+                min_heap_insert(heap, calc_insp_msg.file_number, time(NULL) + 365 * 24 * 60 * 60  );
+                
+
+                
+            }else {
+                remove_node(heap, calc_insp_msg.file_number);
+            }
         }
 
         process_files_from_heap(heap, &config);
-
 
     }
 
