@@ -6,7 +6,7 @@
 
 typedef struct {
     // int MIN_TIME;
-    int MAX_TIME;
+    float MAX_TIME;
     int MIN_COLUMN;
     int MAX_COLUMN;
     int NUM_GENERATORS;

@@ -15,27 +15,27 @@ int load_config(const char *filename, Config *config) {
 
     // Initialize all configuration values to default or invalid states
     // config->MIN_TIME = -1;
-    config->MAX_TIME = -1;
+    config->MAX_TIME = 1.5 ;
     config->MIN_COLUMN = -1;
     config->MAX_COLUMN = -1;
-    config->NUM_GENERATORS = -1;
+    config->NUM_GENERATORS = 5;
     config->MIN_ROW = -1;
     config->MAX_ROW = -1;
     config->MIN_VALUE = -1;
     config->MAX_VALUE = -1;
-    config->MISS_PERCENTAGE = -1.0f;
-    config->NUM_CALCULATORS = -1;
-    config->NUM_MOVERS = -1;
-    config->NUM_INSPECTOR1 = -1;
-    config->INSPECTOR1_THRESHOLD = -1;
-    config->NUM_INSPECTOR2 = -1;
-    config->INSPECTOR2_THRESHOLD = -1;
-    config->NUM_INSPECTOR3 = -1;
-    config->INSPECTOR3_THRESHOLD = -1;
-    config->PROCESSED_THRESHOLD = -1;
-    config->UNPROCESSED_THRESHOLD = -1;
-    config->BACKUP_THRESHOLD = -1;
-    config->DELETED_THRESHOLD = -1;
+    config->MISS_PERCENTAGE = .2f;
+    config->NUM_CALCULATORS = 5;
+    config->NUM_MOVERS = 5;
+    config->NUM_INSPECTOR1 = 5;
+    config->INSPECTOR1_THRESHOLD = 2;
+    config->NUM_INSPECTOR2 = 5;
+    config->INSPECTOR2_THRESHOLD = 5 ;
+    config->NUM_INSPECTOR3 = 5 ;
+    config->INSPECTOR3_THRESHOLD = 5 ;
+    config->PROCESSED_THRESHOLD = 300;
+    config->UNPROCESSED_THRESHOLD = 100;
+    config->BACKUP_THRESHOLD = 100;
+    config->DELETED_THRESHOLD = 50;
 
     char line[256];
     while (fgets(line, sizeof(line), file)) {
@@ -79,6 +79,7 @@ int load_config(const char *filename, Config *config) {
             else {
                 float value = atof(value_str); // Parse as float
                 if (strcmp(key, "MISS_PERCENTAGE") == 0) config->MISS_PERCENTAGE = value;
+                else if (strcmp(key, "MAX_TIME") == 0) config->MAX_TIME = value;
                 else {
                     fprintf(stderr, "Unexpected float key: %s\n", key);
                 }

@@ -156,9 +156,13 @@ int main(int argc, char *argv[]) {
         if (msgsnd(msgid_mover, &message, sizeof(message.file_number), 0) == -1) {
             perror("Message send failed");
             return 1;
-        } else {
+        }
+        #ifdef __DEBUG
+         else {
+            
             printf("Calculator %d sent file number to queue: %d\n", getpid(), file_number);
         }
+        #endif
 
       }
 
@@ -176,7 +180,9 @@ float calculateAvgCSV(char *filename , int file_number) {
 
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
+        #ifdef __DEBUG
         fprintf(stderr, "Error: Unable to open file %s\n", filename);
+        #endif 
         return -1;
     }
     //open the named semaphore that is created by the generator wich coresponed to the file number
