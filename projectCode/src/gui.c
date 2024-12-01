@@ -23,6 +23,8 @@ void display();
 void timer(int value);
 void init();
 
+
+
 // Render text on the screen
 void renderText(float x, float y, const char *text, void *font, float r, float g, float b) {
     glColor3f(r, g, b);
@@ -156,6 +158,9 @@ void handle_signal(int signal) {
         shmdt(shared_data);
         glutLeaveMainLoop();
     }
+    else if(signal == SIGUSR1){
+        printf("start\n");
+    }
 }
 
 int main(int argc, char **argv) {
@@ -172,6 +177,7 @@ int main(int argc, char **argv) {
     maxTime = config.MAX_TIME * 60;
 
     signal(SIGINT, handle_signal);
+    signal(SIGUSR1, handle_signal);
 
     char *shm_data_key_str = getenv("SHM_DATA_KEY");
     if (!shm_data_key_str) {
@@ -194,10 +200,15 @@ int main(int argc, char **argv) {
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-    glutInitWindowSize(800, 600);
+    glutInitWindowSize(windowWidth, windowHeight);
     glutCreateWindow("GUI Visualization");
 
     init();
+
+    kill(getppid(), SIGUSR2);
+
+    pause();
+
     glutDisplayFunc(display);
     glutTimerFunc(100, timer, 0);
     glutMainLoop();

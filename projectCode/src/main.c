@@ -20,6 +20,7 @@ pid_t *movers_pid;
 pid_t *inspectors1_pid;
 pid_t *inspectors2_pid;
 pid_t *inspectors3_pid;
+pid_t gui_id;
 
 SharedData *shared_data;
 
@@ -80,6 +81,7 @@ int main(int argc, char *argv[]) {
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
     signal(SIGUSR1, handle_usr1);
+    signal(SIGUSR2, handle_usr1);
 
 
 // ============shared memories==================
@@ -333,15 +335,15 @@ int main(int argc, char *argv[]) {
 // ============Forking Processes==================
 
         //fork the GUI process
-    pid_t gui_id;
+
     if((gui_id=fork()) == 0){
         execl("./bin/gui", "gui", argv[1], NULL);
         // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/gui", "gui", argv[1], NULL);
         perror("GUI process failed");
         exit(1);
     }
-sleep(10);
 
+    pause();
     // Fork generator processes
     generators_pid = (pid_t *)malloc(config.NUM_GENERATORS * sizeof(pid_t));
     for (int i = 0; i < config.NUM_GENERATORS; i++) {
@@ -525,8 +527,11 @@ void cleanup() {
 
 // Signal handler for SIGUSR1 
 void handle_usr1(int signal) {
+    if (signal != SIGUSR1) return;
     printf("Received SIGUSR1 signal.%d\n", signal);
     printf("Generator process Created Home Dir.\n");
+    kill(gui_id, SIGUSR1);
+
     
 }
 

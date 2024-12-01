@@ -17,9 +17,16 @@ void handle_signal(int sig) {
 
 // Function to process files from the heap
 void process_files_from_heap(MinHeap *heap, const Config *config) {
+
     if (heap->size > 0) {
         time_t min_time = get_min_time(heap);
          //open the named semaphore that is created by the generator wich coresponed to the file number
+ 
+
+        if (min_time + config->INSPECTOR1_THRESHOLD < time(NULL)) { // if the sem is not aquired , if the file is processed 
+                                                                    // make sure to take the semaphor , if not taken , then remove it 
+                                                                    // from the heap 
+
         char sem_name[150];
         sprintf(sem_name, "/sem_%d", heap->data[0].file_number);
         // open the named semaphore
@@ -30,22 +37,12 @@ void process_files_from_heap(MinHeap *heap, const Config *config) {
         }
 
 
-        // get the semaphore value
-        int sem_value = semctl(sem_id, 0, GETVAL);
-        if (sem_value == -1) {
-            perror("Failed to get semaphore value");
-            exit(EXIT_FAILURE);
-        }
-
-        // if semaphore is aquired then remove the file from the heap and return
-        if (sem_value == 0) {
+        // aquire the semaphore if not aquired then remove the file from the heap and return 
+        if (sem_trywait(sem) == -1) {
             remove_node(heap, heap->data[0].file_number);
+            sem_close(sem);
             return;
-        }
-
-        if (min_time + config->INSPECTOR1_THRESHOLD < time(NULL)) { // if the sem is not aquired , if the file is processed 
-                                                                    // make sure to take the semaphor , if not taken , then remove it 
-                                                                    // from the heap 
+        }                                                       
 
 
             HeapNode min_node = min_heap_extract(heap);
@@ -234,6 +231,7 @@ int main(int argc, char *argv[]) {
         }
 
 
+        
 
         //recive message from the calculator if there is any remove the node with file number from the heap
         if (msgrcv(msgid_insp1, &calc_insp_msg, sizeof(calc_insp_msg.file_number), insp_number , IPC_NOWAIT) == -1) {
