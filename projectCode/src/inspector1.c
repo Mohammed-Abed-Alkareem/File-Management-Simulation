@@ -68,7 +68,7 @@ void process_files_from_heap(MinHeap *heap, const Config *config) {
 
 
             #ifdef __CLI
-            printf("\033[0;33mMover %d moved file number: %d\033[0m\n", getpid(), min_node.file_number);
+            printf("\033[0;33mInsperctor1: File %d moved to unprocessed directory\033[0m\n", min_node.file_number);
             fflush(stdout);
             #endif
         }
