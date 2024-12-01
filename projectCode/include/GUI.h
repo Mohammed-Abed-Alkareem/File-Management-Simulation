@@ -9,7 +9,6 @@
 // Global variables
 int windowWidth = 1020; // Width of the window
 int windowHeight = 980; // Height of the window
-Config config;
 int shm_data_id;
 
 

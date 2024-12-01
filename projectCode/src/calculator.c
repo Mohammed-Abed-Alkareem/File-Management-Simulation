@@ -2,6 +2,8 @@
 
 Config config;
 //const char *logFileSem = "/logFileSem";
+int shm_data_id;
+int sem_data_id;
 
 
 
@@ -77,6 +79,48 @@ int main(int argc, char *argv[]) {
 
 
 
+//get the shared memory id from environment
+    char *shm_data_key_str = getenv("SHM_DATA_KEY");
+    if (shm_data_key_str == NULL) {
+        fprintf(stderr, "Error: SHM_DATA_KEY not set.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int shm_data_key = atoi(shm_data_key_str);
+
+    // Get shared memory ID
+    shm_data_id = shmget(shm_data_key, sizeof(SharedData), 0666);
+    if (shm_data_id == -1) {
+        perror("Shared memory retrieval failed");
+        exit(EXIT_FAILURE);
+    }
+
+    //Attach shared memory to shared_data
+    SharedData *shared_data = (SharedData *)shmat(shm_data_id, NULL, 0);
+    if (shared_data == (void *)-1) {
+        perror("Shared memory attach failed");
+        exit(EXIT_FAILURE);
+    }
+
+
+    //get the semaphore id from environment
+    char *sem_data_key_str = getenv("SEM_DATA_KEY");
+    if (sem_data_key_str == NULL) {
+        fprintf(stderr, "Error: SEM_DATA_KEY not set.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int sem_data_key = atoi(sem_data_key_str);
+
+    // Get semaphore ID
+    sem_data_id = semget(sem_data_key, 1, 0666);
+    if (sem_data_id == -1) {
+        perror("Semaphore retrieval failed");
+        exit(EXIT_FAILURE);
+    }
+
+
+
     // Message structure
     struct msgbuf message;
     char  fileName [200];
@@ -114,6 +158,12 @@ int main(int argc, char *argv[]) {
 
 
         calculateAvgCSV(fileName, file_number); 
+
+        semaphore_wait(sem_data_id);
+        shared_data->total_csv_calculated++;
+
+        semaphore_signal(sem_data_id);
+
         //when cannot open file skip
         //sleep(2);//dummy 
 
@@ -129,6 +179,12 @@ int main(int argc, char *argv[]) {
         }
 
       }
+
+    // Detach the shared memory
+    if (shmdt(shared_data) == -1) {
+        perror("Shared memory detach failed");
+        return 1;
+    }
 
 
     return 0;

@@ -3,6 +3,8 @@
 
 
 Config config;
+int shm_data_id;
+int sem_data_id;
 
 
 int main(int argc, char *argv[]) {
@@ -93,6 +95,48 @@ if (file_counter == (void *)-1) {
 // printf("Process %d: Attached shared memory. file_counter address: %p\n", getpid(), (void *)file_counter);
 
 
+//get the shared memory id from environment
+    char *shm_data_key_str = getenv("SHM_DATA_KEY");
+    if (shm_data_key_str == NULL) {
+        fprintf(stderr, "Error: SHM_DATA_KEY not set.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int shm_data_key = atoi(shm_data_key_str);
+
+    // Get shared memory ID
+    shm_data_id = shmget(shm_data_key, sizeof(SharedData), 0666);
+    if (shm_data_id == -1) {
+        perror("Shared memory retrieval failed");
+        exit(EXIT_FAILURE);
+    }
+
+    //Attach shared memory to shared_data
+    SharedData *shared_data = (SharedData *)shmat(shm_data_id, NULL, 0);
+    if (shared_data == (void *)-1) {
+        perror("Shared memory attach failed");
+        exit(EXIT_FAILURE);
+    }
+
+
+    //get the semaphore id from environment
+    char *sem_data_key_str = getenv("SEM_DATA_KEY");
+    if (sem_data_key_str == NULL) {
+        fprintf(stderr, "Error: SEM_DATA_KEY not set.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int sem_data_key = atoi(sem_data_key_str);
+
+    // Get semaphore ID
+    sem_data_id = semget(sem_data_key, 1, 0666);
+    if (sem_data_id == -1) {
+        perror("Semaphore retrieval failed");
+        exit(EXIT_FAILURE);
+    }
+
+
+
 //     printf("Process %d: Current file_counter value: %d (address: %p)\n", getpid(), *file_counter, (void *)file_counter);
 // fflush(stdout);
 
@@ -109,6 +153,12 @@ if (file_counter == (void *)-1) {
         // printf("\033[0;31mProcess:%d => Generating CSV file: %d\033[0m\n", getpid(), file_number);
 
         generateCSV(file_number);
+
+        // increment total_csv_generated
+        semaphore_wait(sem_data_id);
+        shared_data->total_csv_generated++;
+
+        semaphore_signal(sem_data_id);
 
         struct msgbuf message_calc;
         message_calc.mtype = 1;
@@ -138,6 +188,10 @@ if (file_counter == (void *)-1) {
     }
 
     if (shmdt(file_counter) == -1) {
+        perror("Shared memory detach failed");
+    }
+
+    if (shmdt(shared_data) == -1) {
         perror("Shared memory detach failed");
     }
 

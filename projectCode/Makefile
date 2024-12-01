@@ -28,11 +28,11 @@ endif
 MAIN_EXE = $(BIN_DIR)/file-management-simulation
 SUB_PROGRAMS = $(BIN_DIR)/calculator $(BIN_DIR)/generator \
                $(BIN_DIR)/inspector1 $(BIN_DIR)/inspector2 \
-               $(BIN_DIR)/inspector3 $(BIN_DIR)/mover
+               $(BIN_DIR)/inspector3 $(BIN_DIR)/mover $(BIN_DIR)/gui
 
 # Libraries
 LIBS = -lm
-MAIN_LIBS = -lGL -lGLU -lglut -lm
+GUI_LIBS = -lGL -lGLU -lglut -lm
 
 # Dependencies
 
@@ -46,7 +46,7 @@ all: $(MAIN_EXE) $(SUB_PROGRAMS)
 # Main program
 $(MAIN_EXE): $(OBJ_DIR)/main.o $(CONFIG_OBJ) $(UTILS_OBJ)
 	@mkdir -p $(BIN_DIR)
-	$(CC) $^ -o $@ $(MAIN_LIBS)
+	$(CC) $^ -o $@ $(LIBS)
 
 # Subprograms
 $(BIN_DIR)/calculator: $(OBJ_DIR)/calculator.o $(CONFIG_OBJ) $(UTILS_OBJ)
@@ -72,6 +72,10 @@ $(BIN_DIR)/inspector3: $(OBJ_DIR)/inspector3.o $(CONFIG_OBJ) $(UTILS_OBJ) $(HEAP
 $(BIN_DIR)/mover: $(OBJ_DIR)/mover.o $(CONFIG_OBJ) $(UTILS_OBJ)
 	@mkdir -p $(BIN_DIR)
 	$(CC) $^ -o $@ $(LIBS)
+
+$(BIN_DIR)/gui: $(OBJ_DIR)/gui.o $(CONFIG_OBJ) $(UTILS_OBJ)
+	@mkdir -p $(BIN_DIR)
+	$(CC) $^ -o $@ $(GUI_LIBS)
 
 # Compile common object file
 $(CONFIG_OBJ): $(SRC_DIR)/config.c

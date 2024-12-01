@@ -11,6 +11,8 @@
 #include <string.h>
 #include <sys/wait.h>
 
+void sendKillSignal(pid_t *pid, int num);
+
 // --- Globals ---
 pid_t *generators_pid;
 pid_t *calculators_pid;
@@ -321,13 +323,23 @@ int main(int argc, char *argv[]) {
     setenv("MSG_QUEUE_I2I3_KEY", msg_insp2_insp3_key_str, 1);
     setenv("MSG_QUEUE_MI2_KEY", msg_mover_insp2_key_str, 1);
     setenv("SHM_DATA_KEY", shm_data_key_str, 1);
-    setenv("SEM_GEN_KEY", sem_gen_key_str, 1);
+    setenv("SEM_DATA_KEY", sem_data_key_str, 1);
 
 
     // create the log dir and file 
 
 
 // ============Forking Processes==================
+
+        //fork the GUI process
+    pid_t gui_id;
+    if((gui_id=fork()) == 0){
+        execl("./bin/gui", "gui", argv[1], NULL);
+        // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/gui", "gui", argv[1], NULL);
+        perror("GUI process failed");
+        exit(1);
+    }
+sleep(10);
 
     // Fork generator processes
     generators_pid = (pid_t *)malloc(config.NUM_GENERATORS * sizeof(pid_t));
@@ -408,14 +420,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    //fork the GUI process
-    pid_t gui_id;
-    if((gui_id=fork()) == 0){
-        execl("./bin/gui", "gui", argv[1], NULL);
-        // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/gui", "gui", argv[1], NULL);
-        perror("GUI process failed");
-        exit(1);
-    }
+
 
     while(1){ //always check for the shared data to exit the program
         if(shared_data->files_deleted >= config.DELETED_THRESHOLD){
@@ -440,7 +445,7 @@ int main(int argc, char *argv[]) {
             kill(gui_id, SIGINT);
             break;
         }
-        if(shared_data->total_csv_calculated >= config.MAX_FILES){
+        if(shared_data->total_csv_calculated >= config.PROCESSED_THRESHOLD){
             sendKillSignal(generators_pid, config.NUM_GENERATORS);
             sendKillSignal(calculators_pid, config.NUM_CALCULATORS);
             sendKillSignal(movers_pid, config.NUM_MOVERS);
