@@ -383,6 +383,7 @@ int main(int argc, char *argv[]) {
     }
     //wait for generator to create home dir
     pause();
+    time_t start = time(NULL);
 
     
     if(!dirExists(logDir)) {
@@ -484,6 +485,15 @@ int main(int argc, char *argv[]) {
             break;
         }
         if(shared_data->unprocessed_csv >= config.UNPROCESSED_THRESHOLD){
+            sendKillSignal(generators_pid, config.NUM_GENERATORS);
+            sendKillSignal(calculators_pid, config.NUM_CALCULATORS);
+            sendKillSignal(movers_pid, config.NUM_MOVERS);
+            sendKillSignal(inspectors1_pid, config.NUM_INSPECTOR1);
+            sendKillSignal(inspectors2_pid, config.NUM_INSPECTOR2);
+            sendKillSignal(inspectors3_pid, config.NUM_INSPECTOR3);
+            break;
+        }
+        if(time(NULL) - start >= config.MAX_TIME * 60){
             sendKillSignal(generators_pid, config.NUM_GENERATORS);
             sendKillSignal(calculators_pid, config.NUM_CALCULATORS);
             sendKillSignal(movers_pid, config.NUM_MOVERS);

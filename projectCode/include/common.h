@@ -46,6 +46,6 @@ typedef struct {
 #define unprocessedDir "./files/home/unprocessed"
 #define backupDir "./files/home/backup"
 #define logDir "./files/log"
-#define logFile "./files/home/log.txt" 
+#define logFile "./files/log/log.txt" 
 #define logFileSem "/log_sem"
 #endif // COMMON_H

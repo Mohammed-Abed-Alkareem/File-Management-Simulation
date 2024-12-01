@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/shm.h>
+#include <GL/freeglut.h>
 
 // Data structures and global variables
 float maxTime;
@@ -20,9 +21,9 @@ void handle_signal(int signal);
 void renderText(float x, float y, const char *text, void *font, float r, float g, float b);
 void drawRectangle(float x1, float y1, float x2, float y2, float r, float g, float b);
 void drawLoadingBar(float x, float y, float width, float height, float progress, const char *currentTimeText, const char *maxTimeText);
-void drawVerticalBar(float x, float y, float width, float height, float progress, const char *currentText, const char *maxText);
+void drawVerticalBar(float x, float y, float width, float height, float progress, const char *currentText, const char *maxText, float r, float g, float b);
 void display();
-void timer(int value);
+void timer();
 void init();
 
 
@@ -63,9 +64,9 @@ void drawLoadingBar(float x, float y, float width, float height, float progress,
 }
 
 // Draw a vertical progress bar
-void drawVerticalBar(float x, float y, float width, float height, float progress, const char *currentText, const char *maxText) {
+void drawVerticalBar(float x, float y, float width, float height, float progress, const char *currentText, const char *maxText, float r, float g, float b) {
     drawRectangle(x, y - height, x + width, y, 0.5f, 0.5f, 0.5f); // Background
-    drawRectangle(x, y - height, x + width, y - height + height * progress, 0.2f, 0.8f, 0.2f); // Filled part
+    drawRectangle(x, y - height, x + width, y - height + height * progress,r , g , b); // Filled part
 
     if (currentText) {
         renderText(x + width / 2 - 0.05f, y - height / 2, currentText, GLUT_BITMAP_HELVETICA_18, 1.0f, 1.0f, 1.0f);
@@ -77,7 +78,7 @@ void drawVerticalBar(float x, float y, float width, float height, float progress
 }
 
 // Timer function
-void timer(int value) {
+void timer() {
     elapsedTime += 0.1f; // Increment elapsed time
     if (elapsedTime > maxTime) elapsedTime = maxTime;
 
@@ -124,8 +125,10 @@ void display() {
     sprintf(currentCalculatedText, "%d files", shared_data->total_csv_calculated);
     char maxCalculatedText[50];
     sprintf(maxCalculatedText, "Max: %d files", config.PROCESSED_THRESHOLD);
-    drawVerticalBar(startX, startY, barWidth, 0.8f, calculated_ratio, currentCalculatedText, maxCalculatedText);
-    renderText(-0.9f, 0.4f, "Processed files", GLUT_BITMAP_HELVETICA_18, 1.0f, 1.0f, 1.0f);
+    drawVerticalBar(startX, startY, barWidth, 0.8f, calculated_ratio, currentCalculatedText, maxCalculatedText,7.0f / 255.0f, 96.0f / 255.0f, 31.0f / 255.0f);
+    //rgb(7, 96, 31)
+
+    renderText(startX + 0.05, startY - 0.9f, "Processed files", GLUT_BITMAP_HELVETICA_18, 7.0f / 255.0f, 96.0f / 255.0f, 31.0f / 255.0f);
 
 
     // Unprocessed bar
@@ -134,8 +137,8 @@ void display() {
     sprintf(currentUnprocessedText, "%d files", shared_data->unprocessed_csv);
     char maxUnprocessedText[50];
     sprintf(maxUnprocessedText, "Max: %d files", config.UNPROCESSED_THRESHOLD);
-    drawVerticalBar(startX + 1 * (barWidth + spacing), startY, barWidth, 0.8f, unprocessed_ratio, currentUnprocessedText, maxUnprocessedText);
-    renderText(-0.9f, 0.3f, "Unprocessed files", GLUT_BITMAP_HELVETICA_18, 1.0f, 1.0f, 1.0f);
+    drawVerticalBar(startX + 1 * (barWidth + spacing), startY, barWidth, 0.8f, unprocessed_ratio, currentUnprocessedText, maxUnprocessedText,50.0f / 255.0f, 51.0f / 255.0f, 51.0f / 255.0f);
+    renderText(startX + 1 * (barWidth + spacing)+0.05, startY-0.9f, "Unprocessed files", GLUT_BITMAP_HELVETICA_18,50.0f / 255.0f, 51.0f / 255.0f, 51.0f / 255.0f);
 
     // Backup bar
     float backup_ratio = fminf((float)shared_data->files_moved_to_backup / config.BACKUP_THRESHOLD, 1.0f);
@@ -144,8 +147,8 @@ void display() {
     sprintf(currentBackupText, "%d files", shared_data->files_moved_to_backup);
     char maxBackupText[50];
     sprintf(maxBackupText, "Max: %d files", config.BACKUP_THRESHOLD);
-    drawVerticalBar(startX + 2 * (barWidth + spacing), startY, barWidth, 0.8f, backup_ratio, currentBackupText, maxBackupText);
-    renderText(-0.9f, 0.2f, "Backup files", GLUT_BITMAP_HELVETICA_18, 1.0f, 1.0f, 1.0f);
+    drawVerticalBar(startX + 2 * (barWidth + spacing), startY, barWidth, 0.8f, backup_ratio, currentBackupText, maxBackupText, 41.0f / 255.0f, 184.0f / 255.0f, 219.0f / 255.0f);
+    renderText(startX + 2 * (barWidth + spacing)+0.05, startY-0.9, "Backup files", GLUT_BITMAP_HELVETICA_18, 41.0f / 255.0f, 184.0f / 255.0f, 219.0f / 255.0f);
 
 
     // Deleted bar
@@ -154,8 +157,8 @@ void display() {
     sprintf(currentDeletedText, "%d files", shared_data->files_deleted);
     char maxDeletedText[50];
     sprintf(maxDeletedText, "Max: %d files", config.DELETED_THRESHOLD);
-    drawVerticalBar(startX + 3 * (barWidth + spacing), startY, barWidth, 0.8f, deleted_ratio, currentDeletedText, maxDeletedText);
-    renderText(-0.9f, 0.1f, "Deleted files", GLUT_BITMAP_HELVETICA_18, 1.0f, 1.0f, 1.0f);
+    drawVerticalBar(startX + 3 * (barWidth + spacing), startY, barWidth, 0.8f, deleted_ratio, currentDeletedText, maxDeletedText, 212.0f / 255.0f, 18.0f / 255.0f, 33.0f / 255.0f);
+    renderText(startX + 3 * (barWidth + spacing)+0.05,startY-0.9, "Deleted files", GLUT_BITMAP_HELVETICA_18,212.0f / 255.0f, 18.0f / 255.0f, 33.0f / 255.0f);
 
 
     // print the max and min avg with the file name and the column number (max avg , %d  was in file %d.csv , column %d)
@@ -181,7 +184,7 @@ void init() {
 // Signal handler
 void handle_signal(int signal) {
     if (signal == SIGINT) {
-        printf("\nCaught SIGINT. Detaching shared memory and exiting...\n");
+        printf("\nCaught SIGINT = %d. Detaching shared memory and exiting...\n", signal);
         shmdt(shared_data);
         //pause();
         
