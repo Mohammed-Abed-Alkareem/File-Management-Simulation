@@ -29,7 +29,7 @@ void remove_node(MinHeap* heap, int file_number);
 time_t get_min_time(MinHeap* heap);
 int isCalculated(MinHeap* heap, int file_number);
 void setCalculated(MinHeap* heap, int file_number);
-
+int find_node(MinHeap* heap, int file_number);
 
 
 

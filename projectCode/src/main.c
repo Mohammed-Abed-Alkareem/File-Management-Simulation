@@ -21,6 +21,7 @@ pid_t *inspectors1_pid;
 pid_t *inspectors2_pid;
 pid_t *inspectors3_pid;
 
+SharedData *shared_data;
 
 
 // --- IPC keys ---
@@ -115,7 +116,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Attach shared memory to shared_data
-    SharedData *shared_data = (SharedData *)shmat(shm_data_id, NULL, 0);
+    shared_data = (SharedData *)shmat(shm_data_id, NULL, 0);
     if (shared_data == (void *)-1) {
         perror("Shared memory attach failed");
         cleanup();
@@ -484,6 +485,16 @@ sleep(10);
 
 // cleanup function to remove all allocated resources
 void cleanup() {
+
+    sem_unlink(logFileSem); // Unlink the log semaphore
+
+    for (int i =0 ; i< shared_data->total_csv_generated; i++){
+        char named_sem[100];
+        sprintf(named_sem, "sem_%d", i);
+        sem_unlink(named_sem);
+
+    }
+
     if (shm_id != -1) shmctl(shm_id, IPC_RMID, NULL);
     if (sem_id != -1) semctl(sem_id, 0, IPC_RMID);
     if (msg_gen_calc_id != -1) msgctl(msg_gen_calc_id, IPC_RMID, NULL);
@@ -505,6 +516,9 @@ void cleanup() {
     free(inspectors1_pid);
     free(inspectors2_pid);
     free(inspectors3_pid);
+
+
+
 
     printf("Resources cleaned up.\n");
 }

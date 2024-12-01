@@ -4,6 +4,9 @@
 Config config;
 int sem_id, msg_id; // Global for cleanup during signal handling
 MinHeap *heap;
+int shm_data_id;
+int sem_data_id;
+
 
 // Signal handler for cleanup
 void handle_signal(int sig) {
@@ -27,6 +30,20 @@ void process_files_from_heap(MinHeap *heap, const Config *config) {
                 perror("Error moving file");
                 return;
             }
+
+            
+            semaphore_wait(sem_data_id);// wait for the semaphore to be available
+            SharedData *shared_data = (SharedData *)shmat(shm_data_id, NULL, 0);
+            if (shared_data == (void *)-1) {
+                perror("Shared memory attach failed");
+                return;
+            }
+            shared_data->files_deleted++;
+            shmdt(shared_data);
+            semaphore_signal(sem_data_id);
+
+
+
 
             printf("delete %d moved file number: %d\n", getpid(), min_node.file_number);
         }
@@ -61,6 +78,45 @@ int main(int argc, char *argv[]) {
         perror("Message queue retrieval failed");
         exit(EXIT_FAILURE);
     }
+
+
+
+    //get the shared memory id from environment
+    char *shm_data_key_str = getenv("SHM_DATA_KEY");
+    if (shm_data_key_str == NULL) {
+        fprintf(stderr, "Error: SHM_DATA_KEY not set.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int shm_data_key = atoi(shm_data_key_str);
+
+    // Get shared memory ID
+    shm_data_id = shmget(shm_data_key, sizeof(SharedData), 0666);
+    if (shm_data_id == -1) {
+        perror("Shared memory retrieval failed");
+        exit(EXIT_FAILURE);
+    }
+
+
+    //get the semaphore id from environment
+    char *sem_data_key_str = getenv("SEM_DATA_KEY");
+    if (sem_data_key_str == NULL) {
+        fprintf(stderr, "Error: SEM_DATA_KEY not set.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int sem_data_key = atoi(sem_data_key_str);
+
+    // Get semaphore ID
+    sem_data_id = semget(sem_data_key, 1, 0666);
+    if (sem_data_id == -1) {
+        perror("Semaphore retrieval failed");
+        exit(EXIT_FAILURE);
+    }
+
+
+
+
 
     // Initialize min-heap
     heap = create_min_heap();

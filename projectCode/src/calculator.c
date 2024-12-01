@@ -4,7 +4,7 @@ Config config;
 //const char *logFileSem = "/logFileSem";
 int shm_data_id;
 int sem_data_id;
-
+SharedData *shared_data ;
 
 
 int main(int argc, char *argv[]) {
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
     }
 
     //Attach shared memory to shared_data
-    SharedData *shared_data = (SharedData *)shmat(shm_data_id, NULL, 0);
+    shared_data = (SharedData *)shmat(shm_data_id, NULL, 0);
     if (shared_data == (void *)-1) {
         perror("Shared memory attach failed");
         exit(EXIT_FAILURE);
@@ -159,10 +159,7 @@ int main(int argc, char *argv[]) {
 
         calculateAvgCSV(fileName, file_number); 
 
-        semaphore_wait(sem_data_id);
-        shared_data->total_csv_calculated++;
 
-        semaphore_signal(sem_data_id);
 
         //when cannot open file skip
         //sleep(2);//dummy 
@@ -292,9 +289,17 @@ float calculateAvgCSV(char *filename , int file_number) {
     printf("Log file closed\n");
 
     sem_post(log_sem); // Release the semaphore
+
     printf("Log semaphore released\n");
     sem_close(log_sem); // Close the semaphore
+    
+    semaphore_wait(sem_data_id);
+    shared_data->total_csv_calculated++;
+    semaphore_signal(sem_data_id);
+    
     printf("Log semaphore closed\n");
+
+    
 
 
     free(sum); // Free the allocated memory for sums
