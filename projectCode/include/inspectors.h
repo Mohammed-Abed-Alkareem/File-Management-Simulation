@@ -7,6 +7,8 @@
 
 int main (int argc , char * argv[]);
 
+void sigint_handler(int sig);
+
 struct msgbuf {
     long mtype;        // Message type (must be > 0)
     int file_number;   // The file number

@@ -30,6 +30,13 @@ typedef struct {
     int unprocessed_csv;
     int files_moved_to_backup;
     int files_deleted;
+    float max_avg;
+    float min_avg;
+    int  max_avg_file;
+    int  min_avg_file;
+    int max_avg_col;
+    int min_avg_col;
+
 } SharedData;
 
 

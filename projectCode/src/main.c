@@ -73,7 +73,10 @@ int main(int argc, char *argv[]) {
     }
 
     // Create files directory
-    if(!dirExists(filesDir)) {
+    if(dirExists(filesDir)) {
+        removeDirectory(filesDir);
+        createDirectory(filesDir);
+    }else {
         createDirectory(filesDir);
     }
 
@@ -130,6 +133,30 @@ int main(int argc, char *argv[]) {
     shared_data->unprocessed_csv = 0;
     shared_data->files_moved_to_backup = 0;
     shared_data->files_deleted = 0;
+
+// typedef struct {
+//     int total_csv_generated;
+//     int total_csv_calculated;
+//     int unprocessed_csv;
+//     int files_moved_to_backup;
+//     int files_deleted;
+//     float max_avg;
+//     float min_avg;
+//     int  max_avg_file;
+//     int  min_avg_file;
+//     int max_avg_col;
+//     int min_avg_col;
+
+// } SharedData;
+
+// initalize the shared data 
+    shared_data->max_avg = -10000000.0;
+    shared_data->min_avg = 1000000000.0;
+    shared_data->max_avg_file = -1;
+    shared_data->min_avg_file = -1;
+    shared_data->max_avg_col = -1;
+    shared_data->min_avg_col = -1;
+
 
 
 
@@ -426,6 +453,7 @@ int main(int argc, char *argv[]) {
 
 
     while(1){ //always check for the shared data to exit the program
+        usleep(20000);
         if(shared_data->files_deleted >= config.DELETED_THRESHOLD){
             
             sendKillSignal(generators_pid, config.NUM_GENERATORS);
@@ -434,7 +462,6 @@ int main(int argc, char *argv[]) {
             sendKillSignal(inspectors1_pid, config.NUM_INSPECTOR1);
             sendKillSignal(inspectors2_pid, config.NUM_INSPECTOR2);
             sendKillSignal(inspectors3_pid, config.NUM_INSPECTOR3);
-            kill(gui_id, SIGINT);
 
             break;
         }
@@ -445,7 +472,6 @@ int main(int argc, char *argv[]) {
             sendKillSignal(inspectors1_pid, config.NUM_INSPECTOR1);
             sendKillSignal(inspectors2_pid, config.NUM_INSPECTOR2);
             sendKillSignal(inspectors3_pid, config.NUM_INSPECTOR3);
-            kill(gui_id, SIGINT);
             break;
         }
         if(shared_data->total_csv_calculated >= config.PROCESSED_THRESHOLD){
@@ -455,7 +481,6 @@ int main(int argc, char *argv[]) {
             sendKillSignal(inspectors1_pid, config.NUM_INSPECTOR1);
             sendKillSignal(inspectors2_pid, config.NUM_INSPECTOR2);
             sendKillSignal(inspectors3_pid, config.NUM_INSPECTOR3);
-            kill(gui_id, SIGINT);
             break;
         }
         if(shared_data->unprocessed_csv >= config.UNPROCESSED_THRESHOLD){
@@ -465,7 +490,6 @@ int main(int argc, char *argv[]) {
             sendKillSignal(inspectors1_pid, config.NUM_INSPECTOR1);
             sendKillSignal(inspectors2_pid, config.NUM_INSPECTOR2);
             sendKillSignal(inspectors3_pid, config.NUM_INSPECTOR3);
-            kill(gui_id, SIGINT);
             break;
         }
     }

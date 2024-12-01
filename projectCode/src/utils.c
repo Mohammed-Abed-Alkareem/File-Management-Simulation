@@ -113,3 +113,15 @@ int deleteFile(const char *filename, const char* dir) {
         return -1;
     }
 }
+
+int removeDirectory(const char *path) {
+    char command[100];
+    sprintf(command, "rm -rf %s", path);
+    if (system(command) == 0) {
+        printf("Directory removed: %s\n", path);
+        return 0;
+    } else {
+        perror("Error removing directory");
+        return -1;
+    }
+}

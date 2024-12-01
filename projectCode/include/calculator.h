@@ -18,7 +18,7 @@ int main(int argc, char *argv[]);
 float calculateAvgCSV(char *filename, int file_number);
 int getNumRowsCSV(char *filename);
 int getNumColsCSV(char *filename);
-
+void sigint_handler(int sig);
 // Message structure
 struct msgbuf {
     long mtype;

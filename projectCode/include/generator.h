@@ -18,6 +18,7 @@ int main(int argc, char *argv[]);
 float getRandomFloat(int min, int max);
 void generateCSV(int);
 int getRandomInt(int min, int max);
+void sigint_handler(int sig);
 
 struct msgbuf {
     long mtype;        // Message type (must be > 0)

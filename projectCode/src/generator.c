@@ -5,7 +5,7 @@
 Config config;
 int shm_data_id;
 int sem_data_id;
-
+SharedData *shared_data ;
 
 int main(int argc, char *argv[]) {
     if (argc != 4) {
@@ -29,6 +29,10 @@ int main(int argc, char *argv[]) {
     }
 
     printf("\033[0;31mProcess:%d => Generator process started\033[0m\n", getpid());
+
+    // handel the sigint signal
+    signal(SIGINT, sigint_handler);
+
 
 
     int sem_value = semctl(sem_id, 0, GETVAL);
@@ -112,7 +116,7 @@ if (file_counter == (void *)-1) {
     }
 
     //Attach shared memory to shared_data
-    SharedData *shared_data = (SharedData *)shmat(shm_data_id, NULL, 0);
+    shared_data = (SharedData *)shmat(shm_data_id, NULL, 0);
     if (shared_data == (void *)-1) {
         perror("Shared memory attach failed");
         exit(EXIT_FAILURE);
@@ -141,7 +145,7 @@ if (file_counter == (void *)-1) {
 // fflush(stdout);
 
     //!! change this to be while loop for the current file num < total num of files
-    for (int i = 0; i < 2; i++) {
+    while (1) {
         //sleep(1);
         semaphore_wait(sem_id);
         // printf("\033[0;34mProcess:%d => Semaphore value: %d\033[0m\n", getpid(), semctl(sem_id, 0, GETVAL));
@@ -305,4 +309,16 @@ void generateCSV(int fileNum)
 
 
 
+}
+
+
+
+void sigint_handler(int sig)
+{
+    
+    printf("\033[0;31mProcess:%d => SIGINT received %d \033[0m\n", getpid() , sig);
+    if (shmdt(shared_data) == -1) {
+        perror("Shared memory detach failed");
+    }
+    exit(0);
 }
