@@ -2,8 +2,6 @@
 
 Config config;
 
-
-
 int main (int argc , char * argv[]){
     if (argc != 3) {
         fprintf(stderr, "Usage: %s <config file>\n", argv[0]);
@@ -76,8 +74,6 @@ int main (int argc , char * argv[]){
         return 1;
     }
 
-
-
     // Message structure
     struct msgbuf message;
     struct msgbuf2 message2;
@@ -90,8 +86,7 @@ int main (int argc , char * argv[]){
         }
 
         int file_number = message.file_number;
-        printf("Mover %d received file number: %d\n",getpid(), file_number);
-        //move the file to the processed directory
+     
         char filename[100];
         sprintf(filename, "%d.csv",file_number);
 
@@ -106,7 +101,10 @@ int main (int argc , char * argv[]){
             return 1;
         }
 
-        printf("Mover %d moved file number: %d\n", getpid(), file_number);
+        #ifdef __CLI
+        printf("\033[0;34mMover %d moved file number: %d\033[0m\n", getpid(), file_number);
+        fflush(stdout);
+        #endif
 
     }
 

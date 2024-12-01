@@ -23,6 +23,7 @@ pid_t *inspectors3_pid;
 pid_t gui_id;
 
 SharedData *shared_data;
+int *file_counter;
 
 
 // --- IPC keys ---
@@ -101,7 +102,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Attach shared memory to file_counter
-    int *file_counter = (int *)shmat(shm_id, NULL, 0);
+    file_counter = (int *)shmat(shm_id, NULL, 0);
     if (file_counter == (void *)-1) {
         perror("Shared memory attach failed");
         cleanup();
@@ -128,28 +129,13 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
+
+    // initalize the shared data 
     shared_data->total_csv_generated = 0;
     shared_data->total_csv_calculated = 0;
     shared_data->unprocessed_csv = 0;
     shared_data->files_moved_to_backup = 0;
     shared_data->files_deleted = 0;
-
-// typedef struct {
-//     int total_csv_generated;
-//     int total_csv_calculated;
-//     int unprocessed_csv;
-//     int files_moved_to_backup;
-//     int files_deleted;
-//     float max_avg;
-//     float min_avg;
-//     int  max_avg_file;
-//     int  min_avg_file;
-//     int max_avg_col;
-//     int min_avg_col;
-
-// } SharedData;
-
-// initalize the shared data 
     shared_data->max_avg = -10000000.0;
     shared_data->min_avg = 1000000000.0;
     shared_data->max_avg_file = -1;
@@ -365,55 +351,59 @@ int main(int argc, char *argv[]) {
 
     if((gui_id=fork()) == 0){
         execl("./bin/gui", "gui", argv[1], NULL);
-        // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/gui", "gui", argv[1], NULL);
         perror("GUI process failed");
         exit(1);
     }
 
-    pause();
+    printf("\033[0;35mGUI process created\033[0m\n");
+
+    pause();//wait for the gui to be created
+
     // Fork generator processes
     generators_pid = (pid_t *)malloc(config.NUM_GENERATORS * sizeof(pid_t));
     for (int i = 0; i < config.NUM_GENERATORS; i++) {
         if ((generators_pid[i] = fork()) == 0) {
             execl("./bin/generator", "generator", argv[1], shm_gen_key_str, sem_gen_key_str, NULL);
-            // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/generator", "generator", argv[1], shm_gen_key_str, sem_gen_key_str, NULL);
             perror("Generator process failed");
             exit(1);
         }
     }
+
+    printf("\033[0;35mGenerator processes created\033[0m\n");
+
     //wait for generator to create home dir
     pause();
-    time_t start = time(NULL);
 
-    
+    time_t start = time(NULL); // Start time
+
+    // Create log directory
     if(!dirExists(logDir)) {
         createDirectory(logDir);
     }
 
-   
     // Fork calculator processes
     calculators_pid = (pid_t *)malloc(config.NUM_CALCULATORS * sizeof(pid_t));
     for (int i = 0; i < config.NUM_CALCULATORS; i++) {
         if ((calculators_pid[i] = fork()) == 0) {
             execl("./bin/calculator", "calculator", argv[1], NULL);
-            // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/calculator", "calculator", argv[1], NULL);
             perror("Calculator process failed");
             exit(1);
         }
     }
 
+    printf("\033[0;35mCalculator processes created\033[0m\n");
 
     // Fork mover processes
     movers_pid = (pid_t *)malloc(config.NUM_MOVERS * sizeof(pid_t));
     for (int i = 0; i < config.NUM_MOVERS; i++) {
         if ((movers_pid[i] = fork()) == 0) {
             execl("./bin/mover", "mover", argv[1], sem_mover_key_str, NULL);
-            // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/mover", "mover", argv[1],sem_mover_key_str, NULL);
             perror("Mover process failed");
             exit(1);
         }
     }
 
+    printf("\033[0;35mMover processes created\033[0m\n");
 
     // Fork inspector1 processes
     inspectors1_pid = (pid_t *)malloc(config.NUM_INSPECTOR1 * sizeof(pid_t));
@@ -422,41 +412,42 @@ int main(int argc, char *argv[]) {
         if ((inspectors1_pid[i] = fork()) == 0) {
             sprintf(inspcetor_Number, "%d", i + 1);
             execl("./bin/inspector1", "inspector1", argv[1],sem_inspector1_key_str ,inspcetor_Number, NULL);
-            // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/inspector1", "inspector1", argv[1],sem_inspector1_key_str, NULL);
             perror("Inspector1 process failed");
             exit(1);
         }
     }
 
+    printf("\033[0;35mInspector1 processes created\033[0m\n");
 
     // Fork inspector2 processes
     inspectors2_pid = (pid_t *)malloc(config.NUM_INSPECTOR2 * sizeof(pid_t));
     for (int i = 0; i < config.NUM_INSPECTOR2; i++) {
         if ((inspectors2_pid[i] = fork()) == 0) {
             execl("./bin/inspector2", "inspector2", argv[1],sem_inspector2_key_str, NULL);
-            // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/inspector2", "inspector2", argv[1],sem_inspector2_key_str, NULL);
             perror("Inspector2 process failed");
             exit(1);
         }
     }
+
+    printf("\033[0;35mInspector2 processes created\033[0m\n");
 
     // Fork inspector3 processes
     inspectors3_pid = (pid_t *)malloc(config.NUM_INSPECTOR3 * sizeof(pid_t));
     for (int i = 0; i < config.NUM_INSPECTOR3; i++) {
         if ((inspectors3_pid[i] = fork()) == 0) {
             execl("./bin/inspector3", "inspector3", argv[1] ,  NULL);
-            // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/inspector3", "inspector3", argv[1], NULL);
             perror("Inspector3 process failed");
             exit(1);
         }
     }
 
+    printf("\033[0;35mInspector3 processes created\033[0m\n");
+
 
 
     while(1){ //always check for the shared data to exit the program
         usleep(20000);
-        if(shared_data->files_deleted >= config.DELETED_THRESHOLD){
-            
+        if(shared_data->files_deleted >= config.DELETED_THRESHOLD){ //check if the files deleted is greater than the threshold
             sendKillSignal(generators_pid, config.NUM_GENERATORS);
             sendKillSignal(calculators_pid, config.NUM_CALCULATORS);
             sendKillSignal(movers_pid, config.NUM_MOVERS);
@@ -466,7 +457,7 @@ int main(int argc, char *argv[]) {
 
             break;
         }
-        if(shared_data->files_moved_to_backup >= config.BACKUP_THRESHOLD){
+        if(shared_data->files_moved_to_backup >= config.BACKUP_THRESHOLD){//check if the files moved to backup is greater than the threshold
             sendKillSignal(generators_pid, config.NUM_GENERATORS);
             sendKillSignal(calculators_pid, config.NUM_CALCULATORS);
             sendKillSignal(movers_pid, config.NUM_MOVERS);
@@ -475,7 +466,7 @@ int main(int argc, char *argv[]) {
             sendKillSignal(inspectors3_pid, config.NUM_INSPECTOR3);
             break;
         }
-        if(shared_data->total_csv_calculated >= config.PROCESSED_THRESHOLD){
+        if(shared_data->total_csv_calculated >= config.PROCESSED_THRESHOLD){ //check if the total csv calculated is greater than the threshold
             sendKillSignal(generators_pid, config.NUM_GENERATORS);
             sendKillSignal(calculators_pid, config.NUM_CALCULATORS);
             sendKillSignal(movers_pid, config.NUM_MOVERS);
@@ -484,7 +475,7 @@ int main(int argc, char *argv[]) {
             sendKillSignal(inspectors3_pid, config.NUM_INSPECTOR3);
             break;
         }
-        if(shared_data->unprocessed_csv >= config.UNPROCESSED_THRESHOLD){
+        if(shared_data->unprocessed_csv >= config.UNPROCESSED_THRESHOLD){ //check if the unprocessed csv is greater than the threshold
             sendKillSignal(generators_pid, config.NUM_GENERATORS);
             sendKillSignal(calculators_pid, config.NUM_CALCULATORS);
             sendKillSignal(movers_pid, config.NUM_MOVERS);
@@ -493,7 +484,7 @@ int main(int argc, char *argv[]) {
             sendKillSignal(inspectors3_pid, config.NUM_INSPECTOR3);
             break;
         }
-        if(time(NULL) - start >= config.MAX_TIME * 60){
+        if(time(NULL) - start >= config.MAX_TIME * 60){ //check if the time is greater than the threshold
             sendKillSignal(generators_pid, config.NUM_GENERATORS);
             sendKillSignal(calculators_pid, config.NUM_CALCULATORS);
             sendKillSignal(movers_pid, config.NUM_MOVERS);
@@ -561,12 +552,10 @@ void cleanup() {
 
 // Signal handler for SIGUSR1 
 void handle_usr1(int signal) {
-    if (signal != SIGUSR1) return;
-    printf("Received SIGUSR1 signal.%d\n", signal);
-    printf("Generator process Created Home Dir.\n");
-    kill(gui_id, SIGUSR1);
-
+    if (signal != SIGUSR1) 
+    return;
     
+    kill(gui_id, SIGUSR1); // Send signal to GUI
 }
 
 // Signal handler to cleanup resources and exit gracefully

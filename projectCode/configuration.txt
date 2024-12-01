@@ -1,11 +1,15 @@
 # Configurations
 
+## game Configurations:
+
 MAX_TIME=1
+
+#-------------------
+
+# CSV Configurations:
 
 MIN_COLUMN=5
 MAX_COLUMN=15
-
-NUM_GENERATORS=10
 
 MIN_ROW=10000
 MAX_ROW=30000
@@ -15,23 +19,31 @@ MAX_VALUE=1000
 
 MISS_PERCENTAGE=0.2
 
+#------------------------
+
+## Number of processes:
+
+NUM_GENERATORS=10
 NUM_CALCULATORS=5
-
 NUM_MOVERS=2
-
 NUM_INSPECTOR1=5
+NUM_INSPECTOR2=5
+NUM_INSPECTOR3=5
+
+#---------------------
+
+## Inpectors Thresholds Time
 
 INSPECTOR1_THRESHOLD=2
-
-NUM_INSPECTOR2=5
 INSPECTOR2_THRESHOLD=5
-
-NUM_INSPECTOR3=5
 INSPECTOR3_THRESHOLD=5
+
+#-----------------------
+
+## Exit Conditions:
 
 PROCESSED_THRESHOLD=100
 UNPROCESSED_THRESHOLD=100
 BACKUP_THRESHOLD=60
 DELETED_THRESHOLD=20
 
-## Add any configuration here dont forget to add it to the struct in /include/config.h and read it in /src/config.c

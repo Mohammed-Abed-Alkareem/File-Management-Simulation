@@ -42,9 +42,13 @@ void process_files_from_heap(MinHeap *heap, const Config *config) {
             if (msgsnd(msg_id_insp2_insp3, &message_insp2_insp3, sizeof(message_insp2_insp3.file_number) + sizeof(message_insp2_insp3.time), 0) == -1) {
                 perror("Message send failed");
                 exit(1);
-            } else {
+            } 
+            #ifdef __DEBUG
+            else {
                 printf("Inspector2 %d sent file number and time to queue: %d\n", getpid(), min_node.file_number);
             }
+            #endif
+
             
             semaphore_wait(sem_data_id);// wait for the semaphore to be available
             SharedData *shared_data = (SharedData *)shmat(shm_data_id, NULL, 0);
@@ -57,7 +61,10 @@ void process_files_from_heap(MinHeap *heap, const Config *config) {
             semaphore_signal(sem_data_id);
 
 
+            #ifdef __CLI
             printf("Mover %d moved file number: %d\n", getpid(), min_node.file_number);
+            fflush(stdout);
+            #endif
         }
     }
 }
@@ -205,10 +212,6 @@ int main(int argc, char *argv[]) {
                 break;
             }
         }
-
-        // Log message details
-        printf("Inspector1: File Number: %d, Creation Time: %ld\n",
-               message.file_number, (long)message.time);
 
         // Insert received message into the heap
         min_heap_insert(heap, message.file_number, message.time);

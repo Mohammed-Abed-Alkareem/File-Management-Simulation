@@ -158,7 +158,10 @@ void remove_node(MinHeap* heap, int file_number) {
     }
 
     if (i == heap->size) {
+
+        #ifdef __DEBUG
         fprintf(stderr, "File number not found in heap\n");
+        #endif
         return;
     }
 
@@ -170,7 +173,9 @@ void remove_node(MinHeap* heap, int file_number) {
 // check if the file is calculated
 int isCalculated(MinHeap* heap, int file_number) {
     if (!heap || heap->size == 0) {
+        #ifdef __DEBUG
         fprintf(stderr, "Heap is empty\n");
+        #endif
         return -1;
     }
 
@@ -180,7 +185,9 @@ int isCalculated(MinHeap* heap, int file_number) {
         }
     }
 
+    #ifdef __DEBUG
     fprintf(stderr, "File number not found in heap\n");
+    #endif
     return -1;
 }
 
@@ -217,6 +224,8 @@ int find_node(MinHeap* heap, int file_number)
         }
     }
 
+    #ifdef __DEBUG
     fprintf(stderr, "File number not found in heap\n");
+    #endif
     return -1;
 }

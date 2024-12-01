@@ -6,6 +6,7 @@ Config config;
 int shm_data_id;
 int sem_data_id;
 SharedData *shared_data ;
+int *file_counter;
 
 int main(int argc, char *argv[]) {
     if (argc != 4) {
@@ -28,21 +29,16 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    #ifdef __CLI
     printf("\033[0;31mProcess:%d => Generator process started\033[0m\n", getpid());
+    fflush(stdout);
+    #endif
 
     // handel the sigint signal
     signal(SIGINT, sigint_handler);
 
 
-
-    int sem_value = semctl(sem_id, 0, GETVAL);
-    if (sem_value == -1) {
-        perror("Failed to get semaphore value");
-        exit(1);
-    }
-    // printf("Initial semaphore value: %d\n", sem_value);
-
-    semaphore_wait(sem_id);
+    semaphore_wait(sem_id); //wait for the semaphore to be available
 
     if (!dirExists(homeDir)) {
         createDirectory(homeDir);
@@ -50,7 +46,7 @@ int main(int argc, char *argv[]) {
         kill(getppid(), SIGUSR1);
 
     }
-    semaphore_signal(sem_id);
+    semaphore_signal(sem_id); //release the semaphore
 
 
 ///message_calc queue for generator and calculator
@@ -82,21 +78,18 @@ int main(int argc, char *argv[]) {
     }
 
 
-//    printf("Process %d: Attempting to retrieve shared memory with key: %d\n", getpid(), shm_key);
 int shm_id = shmget(shm_key, sizeof(int), 0666);
 if (shm_id == -1) {
     perror("Shared memory retrieval failed");
     return 1;
 }
-// printf("Process %d: Retrieved shared memory with ID: %d\n", getpid(), shm_id);
 
 
-int *file_counter = (int *)shmat(shm_id, NULL, 0);
+file_counter = (int *)shmat(shm_id, NULL, 0);
 if (file_counter == (void *)-1) {
     perror("Shared memory attach failed");
     return 1;
 }
-// printf("Process %d: Attached shared memory. file_counter address: %p\n", getpid(), (void *)file_counter);
 
 
 //get the shared memory id from environment
@@ -140,30 +133,25 @@ if (file_counter == (void *)-1) {
     }
 
 
-
-//     printf("Process %d: Current file_counter value: %d (address: %p)\n", getpid(), *file_counter, (void *)file_counter);
-// fflush(stdout);
-
-    //!! change this to be while loop for the current file num < total num of files
     while (1) {
-        //sleep(1);
+        // get the file number from shared memory and increment it
         semaphore_wait(sem_id);
-        // printf("\033[0;34mProcess:%d => Semaphore value: %d\033[0m\n", getpid(), semctl(sem_id, 0, GETVAL));
         int file_number = (*file_counter)++;
-        // printf("\033[0;31mProcess:%d => File number: %d\033[0m\n", getpid(), file_number);
         semaphore_signal(sem_id);
         
-
-        // printf("\033[0;31mProcess:%d => Generating CSV file: %d\033[0m\n", getpid(), file_number);
+        #ifdef __DEBUG
+        printf("\033[0;31mProcess:%d => Generating CSV file: %d\033[0m\n", getpid(), file_number);
+        fflush(stdout);
+        #endif
 
         generateCSV(file_number);
 
         // increment total_csv_generated
         semaphore_wait(sem_data_id);
         shared_data->total_csv_generated++;
-
         semaphore_signal(sem_data_id);
 
+        // send the file number to the message queue for calculator
         struct msgbuf message_calc;
         message_calc.mtype = 1;
         message_calc.file_number = file_number;
@@ -171,10 +159,14 @@ if (file_counter == (void *)-1) {
         if (msgsnd(msg_calc_id, &message_calc, sizeof(message_calc.file_number), 0) == -1) {
             perror("Message send failed");
             exit(1);
-        } else {
+        } 
+        #ifdef __DEBUG
+        else {
             printf("Process:%d => Sent file number to queue: %d\n", getpid(), message_calc.file_number);
         }
+        #endif
 
+        // send the file number and time to the message queue for inspector1
         struct msgbuf2 message_insp1;
         message_insp1.mtype = 1;
         message_insp1.file_number = file_number;
@@ -183,20 +175,15 @@ if (file_counter == (void *)-1) {
         if (msgsnd(msg_insp1_id, &message_insp1, sizeof(message_insp1.file_number) + sizeof(message_insp1.time), 0) == -1) {
             perror("Message send failed");
             exit(1);
-        } else {
+        }
+        #ifdef __DEBUG
+         else {
             printf("Process:%d => Sent file number and time to queue: %d\n", getpid(), message_insp1.file_number);
         }
+        #endif
         
 
-        //sleep(5);
-    }
-
-    if (shmdt(file_counter) == -1) {
-        perror("Shared memory detach failed");
-    }
-
-    if (shmdt(shared_data) == -1) {
-        perror("Shared memory detach failed");
+    
     }
 
     return 0;
@@ -205,16 +192,15 @@ if (file_counter == (void *)-1) {
 
 
 
-float getRandomFloat(int min, int max) //if any other file requiers this it can be moved to utils.c
+float getRandomFloat(int min, int max) 
 {
     float scale = rand() / (float) RAND_MAX; /* [0, 1.0] */
     return min + scale * ( max - min );      /* [min, max] */
-    // code here
+
 }
 
 int getRandomInt(int min, int max)
 {
-
     return rand() % (max - min + 1) + min;
 }
 
@@ -226,7 +212,6 @@ void generateCSV(int fileNum)
 
     int Rows = 10000, Cols = 10;
     int minValue = -100, maxValue = 100;
-    // int Rows = 3, Cols = 2;
 
     //create named semaphore for each csv file
     char sem_name[150];
@@ -245,6 +230,7 @@ void generateCSV(int fileNum)
             exit(1);
         }
 
+        //set the rows, columns, min value and max value
         if (!(config.MIN_ROW ==-1 || config.MAX_ROW ==-1))
         {
             Rows = getRandomInt(config.MIN_ROW, config.MAX_ROW);
@@ -261,16 +247,8 @@ void generateCSV(int fileNum)
             minValue = config.MIN_VALUE;
             maxValue = config.MAX_VALUE;
         }
-
-        // printf("\033[0;34mRows: %d, Cols: %d, MinValue: %d, MaxValue: %d\033[0m\n", Rows, Cols, minValue, maxValue);
-        // //print missing percentage
-        // printf("\033[0;34mMissing percentage: %f\033[0m\n", config.MISS_PERCENTAGE);
-
-
-
  
-        
-
+        //write the csv file with random values and missing values
         for (int i = 0; i < Rows; i++)
         {
             for (int j = 0; j < Cols; j++)
@@ -289,7 +267,6 @@ void generateCSV(int fileNum)
                 else
                 {
                     fprintf(file, "%f", getRandomFloat(minValue, maxValue)); // random value
-                    // fprintf(file, "%f", getRandomFloat(3, 15)); // random value
                     if (j < Cols - 1)
                     {
                         fprintf(file, ",");
@@ -302,21 +279,26 @@ void generateCSV(int fileNum)
         }
 
         fclose(file);
+
+        #ifdef __CLI
         printf("\033[0;32mProcess:%d => CSV file: %s generated successfully\033[0m\n",getpid(), filename);
-
-       
-
-
-
-
+        fflush(stdout);
+        #endif
 }
 
 
 
 void sigint_handler(int sig)
 {
-    
+    #ifdef __CLI
     printf("\033[0;31mProcess:%d => SIGINT received %d \033[0m\n", getpid() , sig);
+    fflush(stdout);
+    #endif
+    
+     if (shmdt(file_counter) == -1) {
+        perror("Shared memory detach failed");
+    }
+
     if (shmdt(shared_data) == -1) {
         perror("Shared memory detach failed");
     }

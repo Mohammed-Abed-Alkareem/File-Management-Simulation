@@ -42,10 +42,10 @@ void process_files_from_heap(MinHeap *heap, const Config *config) {
             shmdt(shared_data);
             semaphore_signal(sem_data_id);
 
-
-
-
-            printf("delete %d moved file number: %d\n", getpid(), min_node.file_number);
+            #ifdef __CLI
+            printf("\033[0;31mInspector3 %d deleted file number: %d\033[0m\n", getpid(), min_node.file_number);
+            fflush(stdout);
+            #endif
         }
     }
 }
@@ -114,10 +114,6 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-
-
-
-
     // Initialize min-heap
     heap = create_min_heap();
     if (!heap) {
@@ -131,16 +127,14 @@ int main(int argc, char *argv[]) {
 
     struct msgbuf2 message;
 
-    printf("\n\nInspector3: Started\n");
     // Main loop
     while (1) {
         usleep(20000);
         if (msgrcv(msg_id, &message, sizeof(message.file_number) + sizeof(message.time), 1, IPC_NOWAIT) == -1) {
             if (errno == ENOMSG) {
-                //printf("\n\nInspector3: No message in the queue\n");
-                // No message in the queue, process files from the heap
+
                 process_files_from_heap(heap, &config);
-                //sleep(1);
+
                 continue;
             } else {
 
@@ -148,11 +142,6 @@ int main(int argc, char *argv[]) {
                 break;
             }
         }
-        printf("\n\nInspector3: Received message\n");
-        // Log message details
-        printf("Inspector3: File Number: %d, Creation Time: %ld\n",
-               message.file_number, (long)message.time);
-
         // Insert received message into the heap
         min_heap_insert(heap, message.file_number, message.time);
 

@@ -23,7 +23,6 @@ void process_files_from_heap(MinHeap *heap, const Config *config) {
         time_t min_time = get_min_time(heap);
          //open the named semaphore that is created by the generator wich coresponed to the file number
  
-
         if (min_time + config->INSPECTOR1_THRESHOLD < time(NULL)) { // if the sem is not aquired , if the file is processed 
                                                                     // make sure to take the semaphor , if not taken , then remove it 
                                                                     // from the heap 
@@ -68,15 +67,16 @@ void process_files_from_heap(MinHeap *heap, const Config *config) {
 
 
 
-
-            printf("Mover %d moved file number: %d\n", getpid(), min_node.file_number);
+            #ifdef __CLI
+            printf("\033[0;33mMover %d moved file number: %d\033[0m\n", getpid(), min_node.file_number);
+            fflush(stdout);
+            #endif
         }
     }
 }
 
 int main(int argc, char *argv[]) {
 
-    //sleep(500);
     if (argc != 4) {
         fprintf(stderr, "Usage: %s <config file> <semaphore key>\n", argv[0]);
         exit(EXIT_FAILURE);
@@ -132,10 +132,6 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-
-
-
-
     // Get semaphore value
     int sem_value = semctl(sem_id, 0, GETVAL);
     if (sem_value == -1) {
@@ -169,8 +165,6 @@ int main(int argc, char *argv[]) {
         perror("Message queue retrieval failed");
         exit(EXIT_FAILURE);
     }
-
-
     
     //access the message queue between clac and insp1
     key_str = getenv("MSG_QUEUE_I1C_KEY");
@@ -186,8 +180,6 @@ int main(int argc, char *argv[]) {
         perror("Message queue retrieval failed");
         return 1;
     }
-
-
 
     // Initialize min-heap
     heap = create_min_heap();
@@ -206,33 +198,27 @@ int main(int argc, char *argv[]) {
     while (1) {
         usleep(20000);
 
-        
         if (msgrcv(msg_id, &message, sizeof(message.file_number) + sizeof(message.time), 1, IPC_NOWAIT) == -1) {
             if (errno != ENOMSG) {
                 perror("Message receive failed");
                 break;
             }
         }else {
-                
-                    // Log message details
-            printf("Inspector1: File Number: %d, Creation Time: %ld\n",
-               message.file_number, (long)message.time);
-
 
             if (find_node(heap, message.file_number) != -1) {
+
+                #ifdef __DEBUG
                 printf("\033[0;31mFile number already in heap %d\033[0m\n", message.file_number);
+                fflush(stdout);
+                #endif
+
                 remove_node(heap, message.file_number);
             }else {
-                        // Insert received message into the heap
                 min_heap_insert(heap, message.file_number, message.time);
             }
-            // Process files from the heap
-            //process_files_from_heap(heap, &config);
 
         }
 
-
-        
 
         //recive message from the calculator if there is any remove the node with file number from the heap
         if (msgrcv(msgid_insp1, &calc_insp_msg, sizeof(calc_insp_msg.file_number), insp_number , IPC_NOWAIT) == -1) {
@@ -242,14 +228,12 @@ int main(int argc, char *argv[]) {
             }
         }else { // if there is a message from the calculator remove the file from the heap
             if (find_node(heap, calc_insp_msg.file_number) == -1) {
-                fprintf(stderr, "File number not found in heap\n");
-                // add the file with time inf to the heap
+                
+                #ifdef __DEBUG
                 printf("\033[0;31mFile not in the heap %d\033[0m\n", message.file_number);
-
+                fflush(stdout);
+                #endif
                 min_heap_insert(heap, calc_insp_msg.file_number, time(NULL) + 365 * 24 * 60 * 60  );
-                
-
-                
             }else {
                 remove_node(heap, calc_insp_msg.file_number);
             }
@@ -259,7 +243,5 @@ int main(int argc, char *argv[]) {
 
     }
 
-    // Cleanup resources
-    free_min_heap(heap);
     return 0;
 }

@@ -191,7 +191,7 @@ void handle_signal(int signal) {
         glutLeaveMainLoop();
     }
     else if(signal == SIGUSR1){
-        printf("start\n");
+        return;
     }
 }
 

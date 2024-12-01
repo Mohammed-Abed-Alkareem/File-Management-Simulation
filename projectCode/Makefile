@@ -5,6 +5,9 @@ SRC_DIR = src
 OBJ_DIR = obj
 BIN_DIR = bin
 
+ifdef __DEBUG
+	CFLAGS += -D__DEBUG -D__CLI -g
+endif
 
 ifdef __CLI
     CFLAGS += -D__CLI
