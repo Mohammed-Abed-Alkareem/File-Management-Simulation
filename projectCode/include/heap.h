@@ -8,6 +8,7 @@
 typedef struct {
     int file_number;
     time_t creation_time;
+    int isCalculated;
 } HeapNode;
 
 // Min-Heap structure
@@ -15,6 +16,7 @@ typedef struct {
     HeapNode* data;  // Dynamic array to store heap nodes
     size_t size;     // Current number of elements
     size_t capacity; // Current capacity
+    
 } MinHeap;
 
 // Function declarations
@@ -25,5 +27,10 @@ HeapNode min_heap_extract(MinHeap* heap);
 void print_heap(MinHeap* heap);
 void remove_node(MinHeap* heap, int file_number);
 time_t get_min_time(MinHeap* heap);
+int isCalculated(MinHeap* heap, int file_number);
+void setCalculated(MinHeap* heap, int file_number);
+
+
+
 
 #endif // HEAP_H

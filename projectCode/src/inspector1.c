@@ -20,6 +20,13 @@ void process_files_from_heap(MinHeap *heap, const Config *config) {
         if (min_time + config->INSPECTOR1_THRESHOLD < time(NULL)) { // if the sem is not aquired , if the file is processed 
                                                                     // make sure to take the semaphor , if not taken , then remove it 
                                                                     // from the heap 
+            
+            // if the node is calculated then return 
+            if (isCalculated(heap, heap->data[0].file_number) == 1) {
+                remove_node(heap, heap->data[0].file_number);
+                return;
+            }
+
             HeapNode min_node = min_heap_extract(heap);
 
             char filename[100];
@@ -131,12 +138,8 @@ int main(int argc, char *argv[]) {
 
         
         if (msgrcv(msg_id, &message, sizeof(message.file_number) + sizeof(message.time), 1, IPC_NOWAIT) == -1) {
-            if (errno == ENOMSG) {
-                // No message in the queue, process files from the heap
-                process_files_from_heap(heap, &config);
-                //sleep(1);
-                //continue;
-            } else {
+            if (errno != ENOMSG) {
+
                 perror("Message receive failed");
                 break;
             }
@@ -149,7 +152,7 @@ int main(int argc, char *argv[]) {
             min_heap_insert(heap, message.file_number, message.time);
 
             // Process files from the heap
-            process_files_from_heap(heap, &config);
+            //process_files_from_heap(heap, &config);
 
         }
 
@@ -157,21 +160,16 @@ int main(int argc, char *argv[]) {
 
         //recive message from the calculator if there is any remove the node with file number from the heap
         if (msgrcv(msgid_insp1, &calc_insp_msg, sizeof(calc_insp_msg.file_number), insp_number , IPC_NOWAIT) == -1) {
-            if (errno == ENOMSG) {
-                // No message in the queue, process files from the heap
-                
-                process_files_from_heap(heap, &config);
-                //sleep(1);
-                //continue;
-            } else {
+            if (errno != ENOMSG) {
                 perror("Message receive failed");
                 break;
             }
         }else { // if there is a message from the calculator remove the file from the heap
             remove_node(heap, calc_insp_msg.file_number);
+            
         }
 
-
+        process_files_from_heap(heap, &config);
 
 
     }

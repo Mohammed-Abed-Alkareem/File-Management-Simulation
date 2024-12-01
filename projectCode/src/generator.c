@@ -173,7 +173,7 @@ void generateCSV(int fileNum)
     //create named semaphore for each csv file
     char sem_name[150];
     sprintf(sem_name, "/sem_%d", i);
-    sem_t *sem = sem_open(sem_name, O_CREAT, 0666, 1);
+    sem_t *sem = sem_open(sem_name, O_CREAT, 0666, 1);     
     if (sem == SEM_FAILED) {
         perror("Semaphore creation failed");
         exit(1);

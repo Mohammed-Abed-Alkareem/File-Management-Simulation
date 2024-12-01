@@ -33,19 +33,35 @@ void free_min_heap(MinHeap* heap) {
     }
 }
 
-// Function to insert a file number and time into the heap
+// Function to insert a file number and time into the heap if the file exists ignore it
 void min_heap_insert(MinHeap* heap, int file_number, time_t creation_time) {
-    if (!heap) return;
+    if (!heap) {
+        fprintf(stderr, "Heap is NULL\n");
+        return;
+    }
 
+    // Check if the file number already exists in the heap
+    for (size_t i = 0; i < heap->size; i++) {
+        if (heap->data[i].file_number == file_number) {
+            return;
+        }
+    }
+
+    // Resize the heap if necessary
     if (heap->size == heap->capacity) {
         resize_heap(heap);
     }
 
+    // Insert the new node at the end of the heap
     heap->data[heap->size].file_number = file_number;
     heap->data[heap->size].creation_time = creation_time;
+    heap->data[heap->size].isCalculated = 0;
     heap->size++;
+
+    // Maintain the heap property
     min_heapify_up(heap, heap->size - 1);
 }
+
 
 // Function to extract the minimum time node from the heap
 HeapNode min_heap_extract(MinHeap* heap) {
@@ -103,6 +119,7 @@ static void min_heapify_down(MinHeap* heap, size_t index) {
         heap->data[index] = heap->data[smallest];
         heap->data[smallest] = temp;
 
+
         min_heapify_down(heap, smallest);
     }
 }
@@ -148,4 +165,40 @@ void remove_node(MinHeap* heap, int file_number) {
     heap->data[i] = heap->data[heap->size - 1];
     heap->size--;
     min_heapify_down(heap, i);
+}
+
+// check if the file is calculated
+int isCalculated(MinHeap* heap, int file_number) {
+    if (!heap || heap->size == 0) {
+        fprintf(stderr, "Heap is empty\n");
+        return -1;
+    }
+
+    for (size_t i = 0; i < heap->size; i++) {
+        if (heap->data[i].file_number == file_number) {
+            return heap->data[i].isCalculated;
+        }
+    }
+
+    fprintf(stderr, "File number not found in heap\n");
+    return -1;
+}
+
+// set the file as calculated if not found create one and set it as calculated
+void setCalculated(MinHeap* heap, int file_number) {
+    if (!heap) {
+        fprintf(stderr, "Heap is empty\n");
+        return;
+    }
+
+    for (size_t i = 0; i < heap->size; i++) {
+        if (heap->data[i].file_number == file_number) {
+            heap->data[i].isCalculated = 1;
+            return;
+        }
+    }
+
+    // File number not found, insert a new node
+    min_heap_insert(heap, file_number, 0);
+    setCalculated(heap, file_number);
 }

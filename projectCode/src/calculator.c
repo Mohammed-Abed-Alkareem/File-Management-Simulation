@@ -1,6 +1,10 @@
 #include "calculator.h"
 
-   Config config;
+Config config;
+//const char *logFileSem = "/logFileSem";
+
+
+
 int main(int argc, char *argv[]) {
     // Check the number of arguments
     if (argc != 2) {
@@ -103,7 +107,7 @@ int main(int argc, char *argv[]) {
                 perror("Message send failed");
                 return 1;
             } else {
-                printf("Calculator %d sent file number to queue: %d\n", getpid(), file_number);
+                printf("Calculator %d sent file number to Inspector queue : %d\n", getpid(), file_number);
             }
         }
 
@@ -132,6 +136,7 @@ int main(int argc, char *argv[]) {
 
 float calculateAvgCSV(char *filename , int file_number) {
     //int rows = getNumRowsCSV(filename); // Get the number of rows -- not used
+    int rows = 0;
     int cols = getNumColsCSV(filename); // Get the number of columns
 
     FILE *file = fopen(filename, "r");
@@ -142,7 +147,7 @@ float calculateAvgCSV(char *filename , int file_number) {
     //open the named semaphore that is created by the generator wich coresponed to the file number
     char sem_name[150];
     sprintf(sem_name, "/sem_%d", file_number);
-    sem_t *sem = sem_open(sem_name, O_CREAT, 0666, 0);
+    sem_t *sem = sem_open(sem_name, O_CREAT, 0666, 1);
     if (sem == SEM_FAILED) {
         perror("Semaphore creation failed");
         exit(1);
@@ -175,6 +180,7 @@ float calculateAvgCSV(char *filename , int file_number) {
             token = strtok(NULL, ","); // Get the next token (next column)
             col_index++;
         }
+        rows++;
     }
     printf("exit file : %s \n ", filename);
     fclose(file);
@@ -183,11 +189,57 @@ float calculateAvgCSV(char *filename , int file_number) {
 
     // Calculate and print the average for each column
     for (int i = 0; i < cols; i++) {
-      
+            if (count[i] == 0) {
+
+                printf("file: %s Column %d average: %.6f\n",filename , i + 1, 0.0);
+                printf("file : %s Column %d has %d values\n", filename , i + 1, 0);
+                continue;
+            }
             printf("file: %s Column %d average: %.6f\n",filename , i + 1, sum[i] / count[i]);
             printf("file : %s Column %d has %d values\n", filename , i + 1, count[i]);
          
     }
+
+    // Acquire the log file semaphore
+
+    sem_t *log_sem = sem_open(logFileSem, O_CREAT, 0666, 1);
+    if (log_sem == SEM_FAILED) {
+        perror("Semaphore creation failed");
+        exit(1);
+    }
+    sem_wait(log_sem); // Lock the semaphore
+    printf("Log semaphore acquired\n");
+
+    // Open the log file for append
+    FILE *log_file = fopen(logFile, "a");
+    if (log_file == NULL) {
+        perror("Error: Unable to open log file\n");
+        sem_post(log_sem); // Release the semaphore before exiting
+        sem_close(log_sem); // Close the semaphore before exiting
+        return -1;
+    }
+    printf("Log file opened for appending\n");
+
+    // Write the CSV file name, number of rows, and columns
+    fprintf(log_file, "File: %s\n", filename);
+    fprintf(log_file, "Number of rows: %d\n", rows);
+    fprintf(log_file, "Number of columns: %d\n", cols);
+    printf("Logged file name, number of rows, and columns\n");
+
+    // Write the average of each column and number of rows it has in one row for each column
+    for (int i = 0; i < cols; i++) {
+        fprintf(log_file, "Column %d average: %.6f, Number of values: %d\n", i + 1, sum[i] / count[i], count[i]);
+        printf("Logged column %d average and number of values\n", i + 1);
+    }
+    fprintf(log_file, "\n");
+    fclose(log_file);
+    printf("Log file closed\n");
+
+    sem_post(log_sem); // Release the semaphore
+    printf("Log semaphore released\n");
+    sem_close(log_sem); // Close the semaphore
+    printf("Log semaphore closed\n");
+
 
     free(sum); // Free the allocated memory for sums
     free(count); // Free the allocated memory for counts

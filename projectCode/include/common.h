@@ -27,5 +27,7 @@
 #define processesdDir "./files/home/Processed"
 #define unprocessedDir "./files/home/unprocessed"
 #define backupDir "./files/home/backup"
-
+#define logDir "./files/home/log"
+#define logFile "./files/home/log/log.txt" 
+#define logFileSem "/log_sem"
 #endif // COMMON_H
