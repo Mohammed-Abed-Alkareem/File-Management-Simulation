@@ -15,6 +15,7 @@
 #include <sys/wait.h>
 
 int main(int argc, char *argv[]);
+void sigint_handler(int sig);
 
 struct msgbuf {
     long mtype;        // Message type (must be > 0)

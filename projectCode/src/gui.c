@@ -12,6 +12,8 @@ float elapsedTime = 0.0f;
 SharedData *shared_data;
 Config config;
 int shm_data_id;
+float timeProgress = 0.0f;
+char currentTimeText[50];
 
 // Function prototypes
 void handle_signal(int signal);
@@ -87,12 +89,20 @@ void timer(int value) {
 
 // Display function
 void display() {
+    
     glClear(GL_COLOR_BUFFER_BIT);
+    //float timeProgress = elapsedTime / maxTime;
+       // if ratio is 1 stop the timer
+    if (!(shared_data->total_csv_calculated >= config.PROCESSED_THRESHOLD || shared_data->unprocessed_csv >= config.UNPROCESSED_THRESHOLD || shared_data->files_moved_to_backup >= config.BACKUP_THRESHOLD || shared_data->files_deleted >= config.DELETED_THRESHOLD)) {
+        timeProgress = elapsedTime / maxTime;
+            sprintf(currentTimeText, "%.1f s", elapsedTime);
+
+    }
+
+
 
     // Timer bar
-    float timeProgress = elapsedTime / maxTime;
-    char currentTimeText[50];
-    sprintf(currentTimeText, "%.1f s", elapsedTime);
+
     char maxTimeText[50];
     sprintf(maxTimeText, "Max: %.1f s", maxTime);
     drawLoadingBar(-0.9f, 0.9f, 1.0f, 0.1f, timeProgress, currentTimeText, maxTimeText);
@@ -115,6 +125,8 @@ void display() {
     char maxCalculatedText[50];
     sprintf(maxCalculatedText, "Max: %d files", config.PROCESSED_THRESHOLD);
     drawVerticalBar(startX, startY, barWidth, 0.8f, calculated_ratio, currentCalculatedText, maxCalculatedText);
+    renderText(-0.9f, 0.4f, "Processed files", GLUT_BITMAP_HELVETICA_18, 1.0f, 1.0f, 1.0f);
+
 
     // Unprocessed bar
     float unprocessed_ratio = fminf((float)shared_data->unprocessed_csv / config.UNPROCESSED_THRESHOLD, 1.0f);
@@ -123,14 +135,18 @@ void display() {
     char maxUnprocessedText[50];
     sprintf(maxUnprocessedText, "Max: %d files", config.UNPROCESSED_THRESHOLD);
     drawVerticalBar(startX + 1 * (barWidth + spacing), startY, barWidth, 0.8f, unprocessed_ratio, currentUnprocessedText, maxUnprocessedText);
+    renderText(-0.9f, 0.3f, "Unprocessed files", GLUT_BITMAP_HELVETICA_18, 1.0f, 1.0f, 1.0f);
 
     // Backup bar
     float backup_ratio = fminf((float)shared_data->files_moved_to_backup / config.BACKUP_THRESHOLD, 1.0f);
+
     char currentBackupText[50];
     sprintf(currentBackupText, "%d files", shared_data->files_moved_to_backup);
     char maxBackupText[50];
     sprintf(maxBackupText, "Max: %d files", config.BACKUP_THRESHOLD);
     drawVerticalBar(startX + 2 * (barWidth + spacing), startY, barWidth, 0.8f, backup_ratio, currentBackupText, maxBackupText);
+    renderText(-0.9f, 0.2f, "Backup files", GLUT_BITMAP_HELVETICA_18, 1.0f, 1.0f, 1.0f);
+
 
     // Deleted bar
     float deleted_ratio = fminf((float)shared_data->files_deleted / config.DELETED_THRESHOLD, 1.0f);
@@ -139,6 +155,17 @@ void display() {
     char maxDeletedText[50];
     sprintf(maxDeletedText, "Max: %d files", config.DELETED_THRESHOLD);
     drawVerticalBar(startX + 3 * (barWidth + spacing), startY, barWidth, 0.8f, deleted_ratio, currentDeletedText, maxDeletedText);
+    renderText(-0.9f, 0.1f, "Deleted files", GLUT_BITMAP_HELVETICA_18, 1.0f, 1.0f, 1.0f);
+
+
+    // print the max and min avg with the file name and the column number (max avg , %d  was in file %d.csv , column %d)
+    char maxAvgText[50];
+    sprintf(maxAvgText, "Max Avg: %.2f in file %d.csv, column %d", shared_data->max_avg, shared_data->max_avg_file, shared_data->max_avg_col);
+    renderText(-0.9f, -0.6f, maxAvgText, GLUT_BITMAP_HELVETICA_18, 0.0f, 1.0f, 0.0f);
+
+    char minAvgText[50];
+    sprintf(minAvgText, "Min Avg: %.2f in file %d.csv, column %d", shared_data->min_avg, shared_data->min_avg_file, shared_data->min_avg_col);
+    renderText(-0.9f, -0.7f, minAvgText, GLUT_BITMAP_HELVETICA_18, 1.0f, 0.0f, 0.0f);
 
     glutSwapBuffers();
 }
@@ -156,6 +183,8 @@ void handle_signal(int signal) {
     if (signal == SIGINT) {
         printf("\nCaught SIGINT. Detaching shared memory and exiting...\n");
         shmdt(shared_data);
+        //pause();
+        
         glutLeaveMainLoop();
     }
     else if(signal == SIGUSR1){

@@ -39,6 +39,9 @@ int main (int argc , char * argv[]){
     semaphore_signal(sem_id);
     
 
+    // handel the sigint signal
+    signal(SIGINT, sigint_handler);
+
         ////////////////////////////
     // Access the message queue
 
@@ -110,4 +113,13 @@ int main (int argc , char * argv[]){
     
 
     return 0;
+}
+
+
+
+
+void sigint_handler(int sig)
+{
+    printf("\033[0;31mProcess:%d => SIGINT received %d \033[0m\n", getpid(), sig);
+    exit(0);
 }

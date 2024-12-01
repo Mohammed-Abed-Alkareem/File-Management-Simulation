@@ -10,8 +10,9 @@ MinHeap *heap;
 // Signal handler for cleanup
 void handle_signal(int sig) {
     printf("Cleaning up resources...\n");
-    printf("Exiting gracefully on signal %d.\n", sig);
+    printf("Exiting gracefully on signal  %d.\n", sig);
     if (heap) free_min_heap(heap);
+
     exit(0);
 }
 

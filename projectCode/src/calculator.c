@@ -44,6 +44,10 @@ int main(int argc, char *argv[]) {
 
 
 
+    // handel the sigint signal
+    signal(SIGINT, sigint_handler);
+
+
     //access the message queue between clac and insp1
     key_str = getenv("MSG_QUEUE_I1C_KEY");
     if (key_str == NULL) {
@@ -194,6 +198,9 @@ float calculateAvgCSV(char *filename , int file_number) {
     int rows = 0;
     int cols = getNumColsCSV(filename); // Get the number of columns
 
+    int max_index_avg = 0 ; 
+    int min_index_avg = 0 ;
+
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         fprintf(stderr, "Error: Unable to open file %s\n", filename);
@@ -294,6 +301,18 @@ float calculateAvgCSV(char *filename , int file_number) {
 
     // Write the average of each column and number of rows it has in one row for each column
     for (int i = 0; i < cols; i++) {
+        // find the max and min average
+        if (count[i] == 0) {
+            continue;
+        }
+        
+        if ( sum[i] / count[i] > sum[max_index_avg] / count[max_index_avg]){
+            max_index_avg = i;
+        }
+        if (sum[i] / count[i] < sum[min_index_avg] / count[min_index_avg]){
+            min_index_avg = i;
+        }
+
         fprintf(log_file, "Column %d average: %.6f, Number of values: %d\n", i + 1, sum[i] / count[i], count[i]);
         printf("Logged column %d average and number of values\n", i + 1);
     }
@@ -307,7 +326,25 @@ float calculateAvgCSV(char *filename , int file_number) {
     sem_close(log_sem); // Close the semaphore
     
     semaphore_wait(sem_data_id);
+
+
+
     shared_data->total_csv_calculated++;
+
+
+    // check if the min and max avg in shared date and then update if needed  
+    if (sum[max_index_avg] / count[max_index_avg] > shared_data->max_avg){
+        shared_data->max_avg = sum[max_index_avg] / count[max_index_avg];
+        shared_data->max_avg_col = max_index_avg+1;
+        shared_data->max_avg_file = file_number;
+    }
+    if (sum[min_index_avg] / count[min_index_avg] < shared_data->min_avg){
+        shared_data->min_avg = sum[min_index_avg] / count[min_index_avg];
+        shared_data->min_avg_col = min_index_avg+1;
+        shared_data->min_avg_file = file_number;
+
+    }
+
     semaphore_signal(sem_data_id);
     
     printf("Log semaphore closed\n");
@@ -359,4 +396,15 @@ int getNumColsCSV(char *filename) {
 
     fclose(file);
     return count;
+}
+
+
+
+void sigint_handler(int sig)
+{
+    printf("\033[0;31mProcess:%d => SIGINT received %d \033[0m\n", getpid(), sig);
+    if (shmdt(shared_data) == -1) {
+        perror("Shared memory detach failed");
+    }
+    exit(0);
 }
