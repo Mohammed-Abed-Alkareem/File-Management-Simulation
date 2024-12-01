@@ -5,7 +5,7 @@
 #include "common.h"
 
 typedef struct {
-    int MIN_TIME;
+    // int MIN_TIME;
     int MAX_TIME;
     int MIN_COLUMN;
     int MAX_COLUMN;

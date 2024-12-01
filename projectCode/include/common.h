@@ -22,12 +22,21 @@
 #include <fcntl.h>
 #include <math.h>
 
+typedef struct {
+    int total_csv_generated;
+    int total_csv_calculated;
+    int unprocessed_csv;
+    int files_moved_to_backup;
+    int files_deleted;
+} SharedData;
+
+
 #define filesDir "./files"
 #define homeDir "./files/home" // home directory can be added in another directory if needed
 #define processesdDir "./files/home/Processed"
 #define unprocessedDir "./files/home/unprocessed"
 #define backupDir "./files/home/backup"
-#define logDir "./files/home/log"
-#define logFile "./files/home/log/log.txt" 
+#define logDir "./files/log"
+#define logFile "./files/home/log.txt" 
 #define logFileSem "/log_sem"
 #endif // COMMON_H

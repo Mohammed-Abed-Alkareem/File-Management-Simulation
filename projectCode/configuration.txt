@@ -1,6 +1,6 @@
 # Configurations
 
-MIN_TIME=10
+# MIN_TIME=10 //no need
 MAX_TIME=20
 
 MIN_COLUMN=5

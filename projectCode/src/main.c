@@ -25,7 +25,7 @@ pid_t *inspectors3_pid;
 
 // ----- Shared memory -----
 key_t shm_gen_key; // Shared memory key between generators to obtain file counter
-key_t sem_gen_key; // Semaphore key between generators and calculators
+key_t shm_data_key; // Shared memory key between all processes to share data
 
 // --- Message queues ---
 key_t msg_gen_calc_key; // Message queue key between generators and calculators
@@ -39,6 +39,8 @@ key_t msg_insp2_insp3_key;//meesaage queue key between inspector2 and inspector3
 key_t sem_inspector1_key ; // Semaphore key between inspector1
 key_t sem_inspector2_key; // Semaphore key between inspector2 
 key_t sem_mover_key; // Semaphore key between mover
+key_t sem_gen_key; // Semaphore key between generator
+key_t sem_data_key; // Semaphore key between all processes
 
 
 
@@ -46,6 +48,8 @@ key_t sem_mover_key; // Semaphore key between mover
 int shm_id = -1, sem_id = -1, msg_gen_calc_id = -1, msg_calc_mover_id = -1, msg_gen_insp1_id = -1, msg_mover_insp2_id = -1, msg_insp2_insp3_id = -1; 
 int sem_inspector1_id = -1 , sem_inspector2_id = -1 , sem_mover_id = -1;
 int msg_insp1_calc_id = -1;
+int shm_data_id = -1;
+int sem_data_id = -1;
 
 
 // --- Main ---
@@ -75,8 +79,9 @@ int main(int argc, char *argv[]) {
     signal(SIGUSR1, handle_usr1);
 
 
-// ============Shmem Between Generators==================
-    // Create shared memory key
+// ============shared memories==================
+
+    // Shmem Between Generators
     shm_gen_key = key_generator('A');
 
     // num of file generated .
@@ -97,6 +102,31 @@ int main(int argc, char *argv[]) {
     *file_counter = 0; // Initialize counter
     shmdt(file_counter);
 
+    // Shared memory for data
+    shm_data_key = ftok(".", 'Z');
+
+    shm_data_id = shmget(shm_data_key, sizeof(SharedData), IPC_CREAT | 0666);
+    if (shm_data_id == -1) {
+        perror("Shared memory creation failed");
+        cleanup();
+        exit(1);
+    }
+
+    // Attach shared memory to shared_data
+    SharedData *shared_data = (SharedData *)shmat(shm_data_id, NULL, 0);
+    if (shared_data == (void *)-1) {
+        perror("Shared memory attach failed");
+        cleanup();
+        exit(1);
+    }
+
+    shared_data->total_csv_generated = 0;
+    shared_data->total_csv_calculated = 0;
+    shared_data->unprocessed_csv = 0;
+    shared_data->files_moved_to_backup = 0;
+    shared_data->files_deleted = 0;
+
+
 
 // ============Semaphores==================
 
@@ -115,7 +145,22 @@ int main(int argc, char *argv[]) {
         cleanup();
         exit(1);
     }
-    // printf("Semaphore initialized with key: %d and id: %d.\n", sem_gen_key, sem_id);
+    
+    // Create semaphore key for shared data
+    sem_data_key = ftok(".", 'Y');
+
+    sem_data_id = semget(sem_data_key, 1, IPC_CREAT | 0666);
+    if (sem_data_id == -1) {
+        perror("Semaphore creation failed");
+        cleanup();
+        exit(1);
+    }
+
+    if (semctl(sem_data_id, 0, SETVAL, 1) == -1) {
+        perror("Semaphore initialization failed");
+        cleanup();
+        exit(1);
+    }
 
 
     // Create semaphore key for inspector1
@@ -246,14 +291,18 @@ int main(int argc, char *argv[]) {
     char msg_insp1_calc_key_str[20];
     char msg_insp2_insp3_key_str[20];
     char msg_mover_insp2_key_str[20];
+    char shm_data_key_str[20];
+    char sem_data_key_str[20];
 
 
     snprintf(shm_gen_key_str, sizeof(shm_gen_key_str), "%d", shm_gen_key);
-    
+    snprintf(shm_data_key_str, sizeof(shm_data_key_str), "%d", shm_data_key);
+
     snprintf(sem_gen_key_str, sizeof(sem_gen_key_str), "%d", sem_gen_key);
     snprintf(sem_inspector1_key_str, sizeof(sem_inspector1_key_str), "%d", sem_inspector1_key);
     snprintf(sem_inspector2_key_str, sizeof(sem_inspector2_key_str), "%d", sem_inspector2_key);
     snprintf(sem_mover_key_str, sizeof(sem_mover_key_str), "%d", sem_mover_key);
+    snprintf(sem_data_key_str, sizeof(sem_data_key_str), "%d", sem_data_key);
     
     snprintf(msg_gen_calc_key_str, sizeof(msg_gen_calc_key_str), "%d", msg_gen_calc_key);
     snprintf(msg_gen_insp1_key_str, sizeof(msg_gen_insp1_key_str), "%d", msg_gen_insp1_key);
@@ -271,6 +320,8 @@ int main(int argc, char *argv[]) {
     setenv("MSG_QUEUE_I1C_KEY", msg_insp1_calc_key_str, 1);
     setenv("MSG_QUEUE_I2I3_KEY", msg_insp2_insp3_key_str, 1);
     setenv("MSG_QUEUE_MI2_KEY", msg_mover_insp2_key_str, 1);
+    setenv("SHM_DATA_KEY", shm_data_key_str, 1);
+    setenv("SEM_GEN_KEY", sem_gen_key_str, 1);
 
 
     // create the log dir and file 
@@ -357,11 +408,65 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    //fork the GUI process
+    pid_t gui_id;
+    if((gui_id=fork()) == 0){
+        execl("./bin/gui", "gui", argv[1], NULL);
+        // execl("/home/adduser/ENCS4330/Projects/Project2/File-Management-Simulation/projectCode/bin/gui", "gui", argv[1], NULL);
+        perror("GUI process failed");
+        exit(1);
+    }
+
+    while(1){ //always check for the shared data to exit the program
+        if(shared_data->files_deleted >= config.DELETED_THRESHOLD){
+            
+            sendKillSignal(generators_pid, config.NUM_GENERATORS);
+            sendKillSignal(calculators_pid, config.NUM_CALCULATORS);
+            sendKillSignal(movers_pid, config.NUM_MOVERS);
+            sendKillSignal(inspectors1_pid, config.NUM_INSPECTOR1);
+            sendKillSignal(inspectors2_pid, config.NUM_INSPECTOR2);
+            sendKillSignal(inspectors3_pid, config.NUM_INSPECTOR3);
+            kill(gui_id, SIGINT);
+
+            break;
+        }
+        if(shared_data->files_moved_to_backup >= config.BACKUP_THRESHOLD){
+            sendKillSignal(generators_pid, config.NUM_GENERATORS);
+            sendKillSignal(calculators_pid, config.NUM_CALCULATORS);
+            sendKillSignal(movers_pid, config.NUM_MOVERS);
+            sendKillSignal(inspectors1_pid, config.NUM_INSPECTOR1);
+            sendKillSignal(inspectors2_pid, config.NUM_INSPECTOR2);
+            sendKillSignal(inspectors3_pid, config.NUM_INSPECTOR3);
+            kill(gui_id, SIGINT);
+            break;
+        }
+        if(shared_data->total_csv_calculated >= config.MAX_FILES){
+            sendKillSignal(generators_pid, config.NUM_GENERATORS);
+            sendKillSignal(calculators_pid, config.NUM_CALCULATORS);
+            sendKillSignal(movers_pid, config.NUM_MOVERS);
+            sendKillSignal(inspectors1_pid, config.NUM_INSPECTOR1);
+            sendKillSignal(inspectors2_pid, config.NUM_INSPECTOR2);
+            sendKillSignal(inspectors3_pid, config.NUM_INSPECTOR3);
+            kill(gui_id, SIGINT);
+            break;
+        }
+        if(shared_data->unprocessed_csv >= config.UNPROCESSED_THRESHOLD){
+            sendKillSignal(generators_pid, config.NUM_GENERATORS);
+            sendKillSignal(calculators_pid, config.NUM_CALCULATORS);
+            sendKillSignal(movers_pid, config.NUM_MOVERS);
+            sendKillSignal(inspectors1_pid, config.NUM_INSPECTOR1);
+            sendKillSignal(inspectors2_pid, config.NUM_INSPECTOR2);
+            sendKillSignal(inspectors3_pid, config.NUM_INSPECTOR3);
+            kill(gui_id, SIGINT);
+            break;
+        }
+    }
+
 
 
     // Wait for all child processes to finish
     int total_processes = config.NUM_GENERATORS + config.NUM_CALCULATORS + config.NUM_MOVERS +
-                          config.NUM_INSPECTOR1 + config.NUM_INSPECTOR2 + config.NUM_INSPECTOR3;
+                          config.NUM_INSPECTOR1 + config.NUM_INSPECTOR2 + config.NUM_INSPECTOR3+1;
     for (int i = 0; i < total_processes; i++) {
         wait(NULL);
     }
@@ -385,6 +490,9 @@ void cleanup() {
     if (msg_insp1_calc_id != -1) msgctl(msg_insp1_calc_id, IPC_RMID, NULL);
     if (msg_mover_insp2_id != -1) msgctl(msg_mover_insp2_id, IPC_RMID, NULL);
     if (msg_insp2_insp3_id != -1) msgctl(msg_insp2_insp3_id, IPC_RMID, NULL);
+    if (shm_data_id != -1) shmctl(shm_data_id, IPC_RMID, NULL);
+    if (sem_data_id != -1) semctl(sem_data_id, 0, IPC_RMID);
+    
     
     free(generators_pid);
     free(calculators_pid);
@@ -420,4 +528,10 @@ key_t key_generator(char letter){
     }
 
     return key ;
+}
+
+void sendKillSignal(pid_t *pid, int num){
+    for(int i = 0; i < num; i++){
+        kill(pid[i], SIGINT);
+    }
 }

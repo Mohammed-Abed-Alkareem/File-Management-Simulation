@@ -14,7 +14,7 @@ int load_config(const char *filename, Config *config) {
     }
 
     // Initialize all configuration values to default or invalid states
-    config->MIN_TIME = -1;
+    // config->MIN_TIME = -1;
     config->MAX_TIME = -1;
     config->MIN_COLUMN = -1;
     config->MAX_COLUMN = -1;
@@ -49,8 +49,8 @@ int load_config(const char *filename, Config *config) {
             // Check for int value first
             if (atof(value_str) == round(atof(value_str))) { // Check if value is an integer
                 int value = atoi(value_str); // Parse as int
-                if (strcmp(key, "MIN_TIME") == 0) config->MIN_TIME = value;
-                else if (strcmp(key, "MAX_TIME") == 0) config->MAX_TIME = value;
+                // if (strcmp(key, "MIN_TIME") == 0) config->MIN_TIME = value;
+               if (strcmp(key, "MAX_TIME") == 0) config->MAX_TIME = value;
                 else if (strcmp(key, "MIN_COLUMN") == 0) config->MIN_COLUMN = value;
                 else if (strcmp(key, "MAX_COLUMN") == 0) config->MAX_COLUMN = value;
                 else if (strcmp(key, "NUM_GENERATORS") == 0) config->NUM_GENERATORS = value;
