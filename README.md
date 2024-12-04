@@ -64,8 +64,46 @@ The simulation ends when any of the following conditions are met:
 
 ## Solution Explanation
 
+1. **CSV File Generation** (Generator Process)
+   - Loads configuration details.
+   - Creates a semaphore and a CSV file with user-defined parameters (rows, columns, ranges, miss percentage).
+   - Generates random decimal values within a specified range.
+   - Introduces missing values based on the miss percentage.
+   - Sends the generated file name through a message queue to the calculator process.
+   - Notifies inspector 1 of the file name and generation time via another message queue.
 
-//add 
+2. **CSV File Calculators** (Calculator Process)
+   - Loads configuration settings.
+   - Waits for a message containing the generated file name.
+   - Acquires the semaphore associated with the file to ensure exclusive access.
+   - Processes the file, calculating column averages while skipping missing values.
+   - Reports metrics like averages and processed file count in shared memory.
+   - Sends the successfully processed file number to the mover process.
+
+3. **CSV File Movers** (Mover Process)
+   - Receives the file number from the calculator process.
+   - Moves the processed file to the designated "Processed" directory.
+   - Creates the "Processed" directory if it doesn't exist.
+   - Updates and reports the total number of moved files.
+   - Sends the moved file number and time of movement to inspector 2 via a message queue.
+
+4. **Inspectors** (Inspector 1, 2, and 3 Processes)
+   - **Inspector 1:**
+      - Receives generated file name and creation time from the generator.
+      - Stores this information in a min-heap data structure.
+      - Periodically checks the min-heap's root node.
+      - If the creation time exceeds the unprocessed file threshold, moves the file to the "UnProcessed" directory.
+   - **Inspector 2:**
+      - Receives file number and time of move from the mover.
+      - Stores this information in a min-heap.
+      - Regularly checks the min-heap's root node.
+      - If the time of move exceeds the processed file threshold, moves the file to the "Backup" directory.
+      - Informs inspector 3 about the moved file and time of movement.
+   - **Inspector 3:**
+      - Receives information from inspector 2 (moved file and time).
+      - Stores it in a min-heap for tracking.
+      - Continuously monitors the min-heap's root node.
+      - When the time exceeds the backup file threshold, deletes the file. 
 
 
 ## **How to Run the Program**
@@ -115,5 +153,12 @@ Run the main program with a configuration file:
 ```bash
 ./bin/file-managment-simulation configuration.txt
 ```
+
+
+**Additional Notes**
+
+- The `configuration.txt` file should contain the necessary parameters for the simulation, such as the number of generators, file size limits, and threshold values.
+- The project utilizes IPC mechanisms like message queues and shared memory to enable efficient communication and data sharing between processes.
+- The visualization component (using OpenGL) provides a visual representation of the system's state and performance metrics.
 
 
