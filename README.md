@@ -116,32 +116,4 @@ Run the main program with a configuration file:
 ./bin/file-managment-simulation configuration.txt
 ```
 
-### **4. Configuration File**
-- Create a `config.txt` file to specify user-defined parameters, such as:
-  - Number of generators, calculators, and inspectors.
-  - Row and column counts.
-  - File aging thresholds.
-  - Time duration for simulation.
-  - Directory paths for file management.
-
-Example `config.txt`:
-```plaintext
-NUM_GENERATORS=5
-NUM_CALCULATORS=3
-NUM_MOVERS=10
-NUM_INSPECTORS_TYPE1=2
-NUM_INSPECTORS_TYPE2=2
-NUM_INSPECTORS_TYPE3=2
-ROW_COUNT=10000
-COLUMN_COUNT=10
-VALUE_RANGE_MIN=0.0
-VALUE_RANGE_MAX=100.0
-MISS_PERCENTAGE=5
-AGING_THRESHOLD=10
-MAX_PROCESSED_FILES=1000
-MAX_UNPROCESSED_FILES=500
-SIMULATION_DURATION=60
-```
-
----
 
